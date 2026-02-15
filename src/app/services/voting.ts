@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class VotingService {
-  private apiUrl = 'http://127.0.0.1:8000/api';
+  private apiUrl = 'http://localhost:8000';
 
   constructor(private http: HttpClient) {}
 
@@ -30,7 +30,7 @@ export class VotingService {
   }
 
   registerVoter(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/voters/`, data, {
+    return this.http.post(`${this.apiUrl}/register`, data, {
       headers: this.getHeaders()
     });
   }
@@ -68,4 +68,6 @@ export class VotingService {
   getResults(): Observable<any> {
     return this.http.get(`${this.apiUrl}/votes/results/`);
   }
+
+
 }

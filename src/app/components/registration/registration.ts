@@ -2708,18 +2708,18 @@ filteredWards = signal<any>([]);
       ward: +this.form.ward
     };
     
-    // this.votingService.registerVoter(data).subscribe({
-    //   next: (response) => {
-    //     this.loading = false;
-    //     this.voterCode = response.voter_code;
-    //     this.showSuccess = true;
-    //     this.form = { fullName: '', idNumber: '', phone: '+254', county: '', constituency: '', ward: '' };
-    //   },
-    //   error: (err) => {
-    //     this.loading = false;
-    //     alert('Registration failed: ' + (err.error?.id_number?.[0] || 'Error occurred'));
-    //   }
-    // });
+    this.votingService.registerVoter(data).subscribe({
+      next: (response) => {
+        this.loading = false;
+        this.voterCode = response.voter_code;
+        this.showSuccess = true;
+        this.form = { fullName: '', idNumber: '', phone: '+254', county: '', constituency: '', ward: '' };
+      },
+      error: (err) => {
+        this.loading = false;
+        alert('Registration failed: ' + (err.error?.id_number?.[0] || 'Error occurred'));
+      }
+    });
     this.router.navigate(["/dashboard"]);
   }
 
