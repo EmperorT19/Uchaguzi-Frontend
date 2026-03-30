@@ -2733,7 +2733,7 @@
 //   }
 // }
 
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5147,7 +5147,7 @@ export class RegistrationComponent implements OnInit {
   filteredConstituencies = signal<any[]>([]);
   filteredWards = signal<any[]>([]);
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: ApiService, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {}
 
@@ -5223,12 +5223,14 @@ export class RegistrationComponent implements OnInit {
         this.voterCode = res.voter_code;
         this.showSuccess = true;
         this.form = { fullName: '', idNumber: '',   email: '',  phone: '+254', county: '', constituency: '', ward: '' };
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.loading = false;
         const errData = err.error;
         if (errData?.id_number) this.errors.idNumber = errData.id_number[0];
         else this.serverError = errData?.error || errData?.detail || 'Registration failed. Please try again.';
+        this.cdr.detectChanges();
       }
     });
   }

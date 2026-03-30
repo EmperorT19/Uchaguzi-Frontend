@@ -105,7 +105,7 @@
 //   }
 // }
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -188,7 +188,8 @@ export class LoginComponent {
   constructor(
     private api: ApiService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   filterNumbers() {
@@ -214,11 +215,15 @@ export class LoginComponent {
           has_voted: Object.fromEntries(hasVotedArray.map((s: string) => [s, true]))
         };
         this.authService.setCurrentUser(user);
+        this.cdr.detectChanges();
         this.router.navigate(['/dashboard']);
       },
-      error: (err: { error: { detail: any; error: any; }; }) => {
+      error: (err: any) => {
         this.loading = false;
-        this.errorMsg = err.error?.detail || err.error?.error || 'Invalid credentials. Please try again.';
+        console.error("Login Error", err);
+        const errData = err.error || {};
+        this.errorMsg = errData.error || errData.detail || 'Invalid credentials or server error. Please try again.';
+        this.cdr.detectChanges();
       }
     });
   }
