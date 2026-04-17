@@ -514,15 +514,15 @@ export class Voting implements OnInit {
     }).subscribe({
       next: (data) => {
         this.loading = false;
-        this.cdr.detectChanges();
         console.log('CANDIDATES RESPONSE:', data);
-        const seat = data.find((s: any) => s.seat_type === seatType);
+        const seat = data.find((s: any) => s.seat_type === seatType && s.candidates.length > 0);
         this.activeSeatId = seat?.seat_id ?? null;
         this.candidates = seat ? seat.candidates.map((c: any) => ({
           id: c.id,
           name: c.full_name,
           party: c.party
         })) : [];
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.loading = false;

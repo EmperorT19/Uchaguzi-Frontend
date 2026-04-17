@@ -258,7 +258,7 @@ export class ResultsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadResults();
-    this.refreshInterval = setInterval(() => this.loadResults(), 30000);
+    this.refreshInterval = setInterval(() => this.loadResults(), 2000);
   }
 
   ngOnDestroy() {
