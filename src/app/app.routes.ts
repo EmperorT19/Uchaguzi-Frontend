@@ -5,6 +5,7 @@ import { LoginComponent } from './components/login/login';
 import { DashboardComponent } from './components/dashboard/dashboard';
 import { Voting } from './components/voting/voting';
 import { ResultsComponent } from './components/results/results';
+import { AdminDashboardComponent } from './components/admin/admin';
 import { AuthGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
@@ -14,17 +15,18 @@ export const routes: Routes = [
   { 
     path: 'dashboard', 
     component: DashboardComponent,
-    // canActivate: [AuthGuard]
   },
   { 
     path: 'voting', 
     component: Voting,
-    // canActivate: [AuthGuard]
   },
   { 
     path: 'results', 
     component: ResultsComponent,
-    // canActivate: [AuthGuard]
+  },
+  {
+    path: 'admin-portal',
+    component: AdminDashboardComponent,
   },
   { path: '**', redirectTo: '' }
 ];

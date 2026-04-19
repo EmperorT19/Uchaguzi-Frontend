@@ -79,14 +79,79 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/candidates`, { params });
   }
 
-  getResults(seatType?: string): Observable<any[]> {
+  getResults(filters: {
+    county?: string;
+    constituency?: string;
+    ward?: string;
+    seat_type?: string;
+  }): Observable<any[]> {
     let params = new HttpParams();
-    if (seatType) params = params.set('seat_type', seatType);
+    if (filters.county) params = params.set('county', filters.county);
+    if (filters.constituency) params = params.set('constituency', filters.constituency);
+    if (filters.ward) params = params.set('ward', filters.ward);
+    if (filters.seat_type) params = params.set('seat_type', filters.seat_type);
+    
     return this.http.get<any[]>(`${this.baseUrl}/results`, { params });
   }
 
   getVoterStatus(voterId: number): Observable<{ has_voted: string[] }> {
     const params = new HttpParams().set('voter_id', voterId.toString());
     return this.http.get<{ has_voted: string[] }>(`${this.baseUrl}/voter/status`, { params });
+  }
+
+  summarizeCandidate(candidateId: number): Observable<{ summary: string }> {
+    return this.http.post<{ summary: string }>(
+      `${this.baseUrl}/candidate/summarize`,
+      { candidate_id: candidateId },
+      { headers: this.headers(), withCredentials: false }
+    );
+  }
+
+  adminLogin(adminKey: string): Observable<{ message: string; token: string }> {
+    return this.http.post<any>(
+      `${this.baseUrl}/system-admin/login`,
+      { admin_key: adminKey },
+      { headers: this.headers() }
+    );
+  }
+
+  getAdminStats(token: string): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.get<any>(`${this.baseUrl}/system-admin/stats`, { headers });
+  }
+
+  getAdminVoters(token: string): Observable<any[]> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.get<any[]>(`${this.baseUrl}/system-admin/voters`, { headers });
+  }
+
+  getAdminCandidates(token: string): Observable<any[]> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.get<any[]>(`${this.baseUrl}/system-admin/candidates`, { headers });
+  }
+
+  getAdminVotes(token: string): Observable<any[]> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.get<any[]>(`${this.baseUrl}/system-admin/votes`, { headers });
+  }
+
+  toggleHalt(token: string): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.post<any>(`${this.baseUrl}/system-admin/toggle-halt`, {}, { headers });
+  }
+
+  addAdminCandidate(token: string, data: any): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.post<any>(`${this.baseUrl}/system-admin/candidates/add`, data, { headers });
+  }
+
+  deleteAdminCandidate(token: string, id: number): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.delete<any>(`${this.baseUrl}/system-admin/candidates/${id}/delete`, { headers });
+  }
+
+  restartElection(token: string): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.post<any>(`${this.baseUrl}/system-admin/restart-voting`, {}, { headers });
   }
 }

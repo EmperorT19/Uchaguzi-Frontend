@@ -418,6 +418,23 @@ const SEATS = [
   { seat_type: 'mca',        name: 'Member of County Assembly',    level: 'Ward',          icon: '🏘️' }
 ];
 
+const I18N: any = {
+  en: {
+    dashboard: 'Dashboard', vote: 'Vote', results: 'Results', logout: 'Logout',
+    welcomeBack: 'Welcome Back', voterCode: 'Voter Code', county: 'County', constituency: 'Constituency', ward: 'Ward',
+    seatsVoted: 'Seats Voted', progress: 'Progress', pending: 'Pending',
+    yourVotingStatus: 'Your Voting Status', voteNow: 'Vote Now', votedSuccess: 'Voted Successfully', level: 'Level',
+    seat_president: 'President', seat_governor: 'Governor', seat_senator: 'Senator', seat_mp: 'Member of Parliament', seat_woman_rep: 'Woman Representative', seat_mca: 'Member of County Assembly'
+  },
+  sw: {
+    dashboard: 'Dashibodi', vote: 'Kura', results: 'Matokeo', logout: 'Toka',
+    welcomeBack: 'Karibu Tena', voterCode: 'Nambari ya Kura', county: 'Kaunti', constituency: 'Eneo Bunge', ward: 'Wadi',
+    seatsVoted: 'Viti Viliyopigiwa Kura', progress: 'Maendeleo', pending: 'Inasubiri',
+    yourVotingStatus: 'Hali Yako ya Kupiga Kura', voteNow: 'Piga Kura Sasa', votedSuccess: 'Imepigwa Kura Kikamilifu', level: 'Ngazi',
+    seat_president: 'Rais', seat_governor: 'Gavana', seat_senator: 'Seneta', seat_mp: 'Mbunge', seat_woman_rep: 'Mwakilishi wa Wanawake', seat_mca: 'Mwakilishi wa Wadi'
+  }
+};
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -429,11 +446,16 @@ const SEATS = [
         <div class="container mx-auto px-8 py-4">
           <div class="flex justify-between items-center">
             <div class="flex gap-4">
-              <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-black via-red-700 to-green-700 text-white shadow-lg border border-white/20">Dashboard</button>
-              <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Vote</button>
-              <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Results</button>
+              <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-black via-red-700 to-green-700 text-white shadow-lg border border-white/20">{{t('dashboard')}}</button>
+              <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">{{t('vote')}}</button>
+              <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">{{t('results')}}</button>
             </div>
-            <button (click)="logout()" class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl shadow-lg">Logout</button>
+            <div class="flex gap-4 items-center">
+              <button (click)="toggleLang()" class="px-4 py-2 font-bold text-white bg-gray-800 border border-white/10 rounded-lg hover:bg-gray-700 transition">
+                {{ lang === 'en' ? 'SW' : 'EN' }}
+              </button>
+              <button (click)="logout()" class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl shadow-lg">{{t('logout')}}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -443,40 +465,40 @@ const SEATS = [
 
           <!-- User Info -->
           <div class="mb-8 bg-gradient-to-r from-black/60 via-red-900/20 to-green-900/20 backdrop-blur-sm rounded-2xl p-8 border border-white/10">
-            <p class="text-sm text-gray-400 mb-1 uppercase tracking-wider">Welcome Back</p>
+            <p class="text-sm text-gray-400 mb-1 uppercase tracking-wider">{{t('welcomeBack')}}</p>
             <h1 class="text-6xl font-bold bg-gradient-to-r from-red-600 via-white to-green-600 bg-clip-text text-transparent uppercase">
               {{ currentUser?.full_name }}
             </h1>
             <div class="mt-4 space-y-2">
-              <p class="text-gray-300">Voter Code: <span class="text-green-400 font-mono font-bold">{{ currentUser?.voter_code }}</span></p>
-              <p class="text-gray-300">County: <span class="text-white font-semibold">{{ currentUser?.county }}</span></p>
-              <p class="text-gray-300">Constituency: <span class="text-white font-semibold">{{ currentUser?.constituency }}</span></p>
-              <p class="text-gray-300">Ward: <span class="text-white font-semibold">{{ currentUser?.ward }}</span></p>
+              <p class="text-gray-300">{{t('voterCode')}}: <span class="text-green-400 font-mono font-bold">{{ currentUser?.voter_code }}</span></p>
+              <p class="text-gray-300">{{t('county')}}: <span class="text-white font-semibold">{{ currentUser?.county }}</span></p>
+              <p class="text-gray-300">{{t('constituency')}}: <span class="text-white font-semibold">{{ currentUser?.constituency }}</span></p>
+              <p class="text-gray-300">{{t('ward')}}: <span class="text-white font-semibold">{{ currentUser?.ward }}</span></p>
             </div>
           </div>
 
           <!-- Progress Stats -->
           <div class="grid md:grid-cols-3 gap-6 mb-8">
             <div class="bg-gradient-to-br from-green-600/20 to-green-800/20 backdrop-blur-sm rounded-2xl p-6 border border-green-500/30">
-              <p class="text-green-400 text-sm uppercase tracking-wider mb-2">Seats Voted</p>
+              <p class="text-green-400 text-sm uppercase tracking-wider mb-2">{{t('seatsVoted')}}</p>
               <div class="text-4xl font-bold text-white">{{ votedCount }} / {{ seats.length }}</div>
             </div>
             <div class="bg-gradient-to-br from-blue-600/20 to-blue-800/20 backdrop-blur-sm rounded-2xl p-6 border border-blue-500/30">
-              <p class="text-blue-400 text-sm uppercase tracking-wider mb-2">Progress</p>
+              <p class="text-blue-400 text-sm uppercase tracking-wider mb-2">{{t('progress')}}</p>
               <div class="text-4xl font-bold text-white">{{ votingProgress }}%</div>
               <div class="mt-3 w-full bg-gray-700 rounded-full h-2">
                 <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all" [style.width.%]="votingProgress"></div>
               </div>
             </div>
             <div class="bg-gradient-to-br from-purple-600/20 to-purple-800/20 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
-              <p class="text-purple-400 text-sm uppercase tracking-wider mb-2">Pending</p>
+              <p class="text-purple-400 text-sm uppercase tracking-wider mb-2">{{t('pending')}}</p>
               <div class="text-4xl font-bold text-white">{{ seats.length - votedCount }}</div>
             </div>
           </div>
 
           <!-- Voting Cards -->
           <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-            <span>🗳️</span> Your Voting Status
+            <span>🗳️</span> {{t('yourVotingStatus')}}
           </h2>
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div *ngFor="let seat of seats"
@@ -489,16 +511,16 @@ const SEATS = [
                 <span class="text-5xl">{{ seat.icon }}</span>
                 <span class="text-4xl">{{ hasVoted(seat.seat_type) ? '✅' : '⏳' }}</span>
               </div>
-              <h3 class="text-2xl font-bold text-white mb-2">{{ seat.name }}</h3>
-              <p class="text-white/70 text-sm mb-4">{{ seat.level }} Level</p>
+              <h3 class="text-2xl font-bold text-white mb-2">{{ t('seat_' + seat.seat_type) }}</h3>
+              <p class="text-white/70 text-sm mb-4">{{ seat.level }} {{t('level')}}</p>
 
               <button *ngIf="!hasVoted(seat.seat_type)"
                       (click)="startVoting(seat)"
                       class="w-full py-3 bg-gradient-to-r from-red-700 via-black to-green-700 hover:from-red-600 hover:via-gray-900 hover:to-green-600 text-white font-bold rounded-lg shadow-xl transition-all border border-white/30">
-                Vote Now
+                {{t('voteNow')}}
               </button>
               <div *ngIf="hasVoted(seat.seat_type)" class="text-green-200 text-sm font-bold flex items-center gap-2">
-                <span>✓</span> Voted Successfully
+                <span>✓</span> {{t('votedSuccess')}}
               </div>
             </div>
           </div>
@@ -513,6 +535,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: Voter | null = null;
   seats = SEATS;
   private interval: any;
+  lang: 'en' | 'sw' = 'en';
+
+  t(key: string): string { return I18N[this.lang][key] || key; }
+  toggleLang() { this.lang = this.lang === 'en' ? 'sw' : 'en'; }
 
   get votedCount(): number {
     if (!this.currentUser?.has_voted) return 0;
