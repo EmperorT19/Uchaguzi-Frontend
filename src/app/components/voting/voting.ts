@@ -319,6 +319,29 @@ const SEAT_META: { [key: string]: { name: string; icon: string; level: string } 
   mca:         { name: 'Member of County Assembly',    icon: '🏘️', level: 'Ward' }
 };
 
+const I18N: any = {
+  en: { 
+     dashboard: 'Dashboard', vote: 'Vote', results: 'Results', logout: 'Logout',
+     ballotJourney: 'Your Ballot Journey', completed: 'Completed', allDone: 'ALL BALLOTS COMPLETED!',
+     castVote: 'Cast Your Vote', selectSeat: 'Select a seat to vote for', voteNow: 'Vote Now',
+     backToSeats: 'Back to Seats', selectCandidate: 'Select your candidate',
+     proceedConfirm: 'Proceed to Confirm Vote', search: 'Search by candidate name or party...',
+     noCandidates: 'No candidates found for this seat in your region.',
+     votedSuccess: 'Voted Successfully',
+     seat_president: 'President', seat_governor: 'Governor', seat_senator: 'Senator', seat_mp: 'Member of Parliament', seat_woman_rep: 'Woman Representative', seat_mca: 'Member of County Assembly'
+  },
+  sw: {
+     dashboard: 'Dashibodi', vote: 'Kura', results: 'Matokeo', logout: 'Toka',
+     ballotJourney: 'Hatua Zako Za Kura', completed: 'Zimekamilika', allDone: 'UMEPIGA KURA ZOTE!',
+     castVote: 'Piga Kura Yako', selectSeat: 'Chagua kiti cha kupigia kura', voteNow: 'Piga Kura Sasa',
+     backToSeats: 'Rudi Nyuma', selectCandidate: 'Chagua mgombea wako',
+     proceedConfirm: 'Endelea Kuthibitisha', search: 'Tafuta kwa jina au chama...',
+     noCandidates: 'Hakuna wagombea waliopatikana kwa kiti hiki katika eneo lako.',
+     votedSuccess: 'Imepigwa Kura Kikamilifu',
+     seat_president: 'Rais', seat_governor: 'Gavana', seat_senator: 'Seneta', seat_mp: 'Mbunge', seat_woman_rep: 'Mwakilishi wa Wanawake', seat_mca: 'Mwakilishi wa Wadi'
+  }
+};
+
 @Component({
   selector: 'app-voting',
   standalone: true,
@@ -326,11 +349,18 @@ const SEAT_META: { [key: string]: { name: string; icon: string; level: string } 
   template: `
     <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
 
-      <!-- Loading overlay -->
-      <div *ngIf="loading" class="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50">
-        <div class="text-center">
-          <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p class="text-white text-xl">{{ loadingMsg }}</p>
+      <!-- Loading Skeleton overlay -->
+      <div *ngIf="loading" class="fixed inset-0 bg-black/90 backdrop-blur z-50 p-8 overflow-y-auto pt-24 text-center">
+        <div class="max-w-4xl mx-auto">
+          <div class="flex justify-between items-center mb-12">
+            <div class="h-12 bg-gray-800/80 w-1/3 rounded-xl animate-pulse"></div>
+            <div class="h-12 w-12 rounded-full border-4 border-t-green-500 border-gray-800 animate-spin"></div>
+          </div>
+          <div class="grid gap-6">
+            <div class="h-32 bg-gray-800/50 rounded-3xl border border-white/5 animate-pulse"></div>
+            <div class="h-32 bg-gray-800/50 rounded-3xl border border-white/5 animate-pulse"></div>
+            <div class="h-32 bg-gray-800/50 rounded-3xl border border-white/5 animate-pulse"></div>
+          </div>
         </div>
       </div>
 
@@ -370,19 +400,40 @@ const SEAT_META: { [key: string]: { name: string; icon: string; level: string } 
       <div class="bg-black/40 backdrop-blur-md border-b border-white/10 sticky top-0 z-40">
         <div class="container mx-auto px-8 py-4 flex justify-between items-center">
           <div class="flex gap-4">
-            <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Dashboard</button>
-            <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-black via-red-700 to-green-700 text-white shadow-lg border border-white/20">Vote</button>
-            <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Results</button>
+            <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">{{t('dashboard')}}</button>
+            <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-black via-red-700 to-green-700 text-white shadow-lg border border-white/20">{{t('vote')}}</button>
+            <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">{{t('results')}}</button>
           </div>
-          <button (click)="logout()" class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-xl">Logout</button>
+          <div class="flex gap-4 items-center">
+            <button (click)="toggleLang()" class="px-4 py-2 font-bold text-white bg-gray-800 rounded-lg border border-white/10 hover:bg-gray-700 transition">
+              {{ lang === 'en' ? 'SW' : 'EN' }}
+            </button>
+            <button (click)="logout()" class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-xl">{{t('logout')}}</button>
+          </div>
         </div>
       </div>
 
       <div class="p-8 max-w-4xl mx-auto">
         <!-- Seat selector -->
         <div *ngIf="!activeSeat">
-          <h1 class="text-4xl font-bold text-white mb-2">Cast Your Vote</h1>
-          <p class="text-gray-400 mb-8">Select a seat to vote for</p>
+          <!-- Voter Progress Tracker -->
+          <div class="mb-10 bg-gray-900/40 p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-center sm:text-left">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 relative z-10">
+              <h2 class="text-2xl font-bold text-white flex items-center gap-2">🗳️ {{t('ballotJourney')}}</h2>
+              <span class="text-green-400 font-black text-xl bg-green-900/30 px-4 py-1 rounded-full border border-green-500/30">
+                {{votedCount}}/{{seatList.length}} {{t('completed')}}
+              </span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-5 overflow-hidden shadow-inner relative z-10">
+              <div class="bg-gradient-to-r from-green-600 to-green-300 h-full rounded-full transition-all duration-1000 ease-out" 
+                   [style.width.%]="(votedCount / seatList.length) * 100"></div>
+            </div>
+            <div *ngIf="votedCount === seatList.length" class="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent flex items-center justify-center animate-pulse"></div>
+            <p *ngIf="votedCount === seatList.length" class="text-green-400 mt-4 text-center font-black text-2xl tracking-widest animate-bounce relative z-10">🎉 {{t('allDone')}}</p>
+          </div>
+
+          <h1 class="text-4xl font-bold text-white mb-2">{{t('castVote')}}</h1>
+          <p class="text-gray-400 mb-8">{{t('selectSeat')}}</p>
 
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div *ngFor="let seat of seatList"
@@ -395,15 +446,15 @@ const SEAT_META: { [key: string]: { name: string; icon: string; level: string } 
                 <span class="text-5xl">{{ seat.icon }}</span>
                 <span class="text-3xl">{{ currentUser?.has_voted?.[seat.key] ? '✅' : '⏳' }}</span>
               </div>
-              <h3 class="text-xl font-bold text-white mb-1">{{ seat.name }}</h3>
+              <h3 class="text-xl font-bold text-white mb-1">{{ t('seat_' + seat.key) }}</h3>
               <p class="text-white/60 text-sm mb-4">{{ seat.level }} Level</p>
               <button *ngIf="!currentUser?.has_voted?.[seat.key]"
                       (click)="selectSeat(seat.key)"
                       class="w-full py-3 bg-gradient-to-r from-red-700 via-black to-green-700 text-white font-bold rounded-lg border border-white/30">
-                Vote Now
+                {{t('voteNow')}}
               </button>
               <div *ngIf="currentUser?.has_voted?.[seat.key]" class="text-green-200 text-sm font-bold flex items-center gap-2">
-                <span>✓</span> Voted Successfully
+                <span>✓</span> {{t('votedSuccess')}}
               </div>
             </div>
           </div>
@@ -412,18 +463,23 @@ const SEAT_META: { [key: string]: { name: string; icon: string; level: string } 
         <!-- Candidate selection -->
         <div *ngIf="activeSeat">
           <button (click)="activeSeat = null; candidates = []" class="mb-6 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
-            ← Back to Seats
+            ← {{t('backToSeats')}}
           </button>
 
-          <h1 class="text-4xl font-bold text-white mb-2">{{ seatMeta[activeSeat]?.name }}</h1>
-          <p class="text-gray-400 mb-8">Select your candidate</p>
+          <h1 class="text-4xl font-bold text-white mb-2">{{ t('seat_' + activeSeat) }}</h1>
+          <p class="text-gray-400 mb-8">{{t('selectCandidate')}}</p>
 
           <div *ngIf="candidates.length === 0 && !loading" class="text-gray-400 text-center py-12">
-            No candidates found for this seat in your region.
+            {{t('noCandidates')}}
+          </div>
+
+          <div *ngIf="candidates.length > 0" class="mb-6">
+            <input [(ngModel)]="searchTerm" type="text" [placeholder]="t('search')" 
+                   class="w-full px-5 py-4 bg-gray-900/80 border-2 border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500 transition-colors shadow-lg" />
           </div>
 
           <div class="grid gap-4">
-            <div *ngFor="let c of candidates"
+            <div *ngFor="let c of filteredCandidates"
                  [ngClass]="{
                    'border-green-500 bg-green-900/20': selectedCandidate?.id === c.id,
                    'border-white/10 hover:border-white/30': selectedCandidate?.id !== c.id
@@ -442,13 +498,28 @@ const SEAT_META: { [key: string]: { name: string; icon: string; level: string } 
                 </div>
                 <div *ngIf="selectedCandidate?.id === c.id" class="text-green-400 text-2xl">✓</div>
               </div>
+
+              <!-- AI Summarize Button & Display block -->
+              <div class="mt-4 pt-4 border-t border-white/10" (click)="$event.stopPropagation()">
+                <button *ngIf="!c.ai_summary && !loadingSummaries[c.id]" (click)="summarizeCandidate(c.id)" class="text-sm font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                  ✨ AI: Summarize Candidate
+                </button>
+                <div *ngIf="loadingSummaries[c.id]" class="flex items-center gap-2 text-sm text-gray-400">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div> Asking AI...
+                </div>
+                <div *ngIf="c.ai_summary" class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 text-sm text-gray-300">
+                  <span class="font-bold text-blue-400 block mb-1">✨ AI Summary</span>
+                  {{ c.ai_summary }}
+                </div>
+              </div>
+
             </div>
           </div>
 
           <button *ngIf="selectedCandidate"
                   (click)="showConfirm = true"
                   class="mt-8 w-full py-5 bg-gradient-to-r from-red-700 via-black to-green-700 text-white font-bold text-xl rounded-lg hover:opacity-90">
-            Proceed to Confirm Vote
+            {{t('proceedConfirm')}}
           </button>
         </div>
       </div>
@@ -466,6 +537,27 @@ export class Voting implements OnInit {
   loadingMsg = 'Loading...';
   showConfirm = false;
   showSuccess = false;
+
+  loadingSummaries: { [key: number]: boolean } = {};
+  searchTerm: string = '';
+  lang: 'en' | 'sw' = 'en';
+
+  t(key: string): string { return I18N[this.lang][key] || key; }
+  toggleLang() { this.lang = this.lang === 'en' ? 'sw' : 'en'; }
+
+  get votedCount(): number {
+    if (!this.currentUser || !this.currentUser.has_voted) return 0;
+    return Object.values(this.currentUser.has_voted).filter(v => v === true).length;
+  }
+
+  get filteredCandidates() {
+    if (!this.searchTerm) return this.candidates;
+    const term = this.searchTerm.toLowerCase();
+    return this.candidates.filter(c => 
+      c.name.toLowerCase().includes(term) || 
+      (c.party && c.party.toLowerCase().includes(term))
+    );
+  }
 
   seatMeta = SEAT_META;
   seatList = Object.entries(SEAT_META).map(([key, val]) => ({ key, ...val }));
@@ -535,6 +627,23 @@ export class Voting implements OnInit {
     this.selectedCandidate = candidate;
   }
 
+  summarizeCandidate(id: number) {
+    this.loadingSummaries[id] = true;
+    this.api.summarizeCandidate(id).subscribe({
+      next: (res) => {
+        const candidate = this.candidates.find(c => c.id === id);
+        if(candidate) candidate.ai_summary = res.summary;
+        this.loadingSummaries[id] = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.loadingSummaries[id] = false;
+        alert('Failed to generate AI summary.');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   confirmVote() {
     if (!this.selectedCandidate || !this.currentUser || !this.activeSeat || !this.activeSeatId) return;
 
@@ -555,9 +664,11 @@ export class Voting implements OnInit {
         this.activeSeatId = null;
         this.candidates = [];
         this.showSuccess = true;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.loading = false;
+        this.cdr.detectChanges();
         alert(err.error?.message || err.error?.detail || 'Failed to cast vote. Please try again.');
       }
     });
