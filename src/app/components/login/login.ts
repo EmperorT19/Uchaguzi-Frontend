@@ -147,13 +147,14 @@ import { AuthService, Voter } from '../../services/auth';
                 maxlength="8" />
             </div>
 
-            <!-- Voter Code -->
+            <!-- Password -->
             <div>
-              <label class="block text-white font-bold mb-2">Voter Code</label>
+              <label class="block text-white font-bold mb-2">Password</label>
               <input
+                type="password"
                 [(ngModel)]="voterCode"
                 class="w-full px-5 py-4 bg-white/5 border-2 border-white/10 rounded-lg text-white focus:outline-none focus:border-green-600 font-mono"
-                placeholder="Sent to your email" />
+                placeholder="Password (Voter Code if first login)" />
             </div>
 
             <!-- Error -->
@@ -175,6 +176,43 @@ import { AuthService, Voter } from '../../services/auth';
           </div>
         </div>
       </div>
+      
+      <!-- Change Password Modal -->
+      <div *ngIf="showPasswordModal" class="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-900 rounded-3xl p-8 max-w-md w-full border-2 border-green-600 shadow-2xl shadow-green-900/50">
+          <h3 class="text-3xl font-bold text-white mb-2">Security Update</h3>
+          <p class="text-gray-400 mb-6">Please create a strong personal password to continue.</p>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-white font-bold mb-2">New Password</label>
+              <input
+                type="password"
+                [(ngModel)]="newPassword"
+                class="w-full px-5 py-4 bg-white/5 border-2 border-white/10 rounded-lg text-white focus:outline-none focus:border-green-500"
+                placeholder="Must be 8-16 chars, mix of case, num & special" />
+            </div>
+            
+            <div>
+              <label class="block text-white font-bold mb-2">Confirm Password</label>
+              <input
+                type="password"
+                [(ngModel)]="confirmPassword"
+                class="w-full px-5 py-4 bg-white/5 border-2 border-white/10 rounded-lg text-white focus:outline-none focus:border-green-500"
+                placeholder="Retype password" />
+            </div>
+            
+            <p *ngIf="pwdErrorMsg" class="text-red-400 text-sm">{{ pwdErrorMsg }}</p>
+
+            <button
+              (click)="changePassword()"
+              [disabled]="loading"
+              class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold text-xl rounded-lg mt-4 disabled:opacity-50 transition-colors">
+              Save Password & Continue
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: []
@@ -184,6 +222,12 @@ export class LoginComponent {
   voterCode = '';
   loading = false;
   errorMsg = '';
+  
+  showPasswordModal = false;
+  newPassword = '';
+  confirmPassword = '';
+  pwdErrorMsg = '';
+  tempUser: any = null;
 
   constructor(
     private api: ApiService,
@@ -207,24 +251,72 @@ export class LoginComponent {
     this.loading = true;
 
     this.api.login({ id_number: this.idNumber, voter_code: this.voterCode.trim() }).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.loading = false;
         const hasVotedArray: string[] = res.user.has_voted || [];
         const user: Voter = {
           ...res.user,
           has_voted: Object.fromEntries(hasVotedArray.map((s: string) => [s, true]))
         };
-        this.authService.setCurrentUser(user);
-        this.cdr.detectChanges();
-        this.router.navigate(['/dashboard']);
+        
+        if (res.requires_password_change) {
+            this.tempUser = user;
+            this.showPasswordModal = true;
+            this.cdr.detectChanges();
+        } else {
+            this.authService.setCurrentUser(user);
+            this.cdr.detectChanges();
+            this.router.navigate(['/dashboard']);
+        }
       },
       error: (err: any) => {
         this.loading = false;
         console.error("Login Error", err);
         const errData = err.error || {};
-        this.errorMsg = errData.error || errData.detail || 'Invalid credentials or server error. Please try again.';
+        this.errorMsg = errData.message || errData.error || errData.detail || 'Invalid credentials or server error. Please try again.';
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  changePassword() {
+    this.pwdErrorMsg = '';
+    
+    if (this.newPassword !== this.confirmPassword) {
+      this.pwdErrorMsg = 'Passwords do not match.';
+      return;
+    }
+    
+    if (this.newPassword.length < 8 || this.newPassword.length > 16) {
+      this.pwdErrorMsg = 'Password must be between 8 and 16 characters.';
+      return;
+    }
+    
+    if (!/[A-Z]/.test(this.newPassword) || !/[a-z]/.test(this.newPassword) || !/\d/.test(this.newPassword) || !/[!@#$%^&*(),.?":{}|<>]/.test(this.newPassword)) {
+      this.pwdErrorMsg = 'Password must contain uppercase, lowercase, number, and special character.';
+      return;
+    }
+    
+    this.loading = true;
+    
+    this.api.changePassword({ 
+        id_number: this.idNumber, 
+        old_password: this.voterCode.trim(), 
+        new_password: this.newPassword 
+    }).subscribe({
+        next: (res) => {
+            this.loading = false;
+            this.showPasswordModal = false;
+            this.authService.setCurrentUser(this.tempUser);
+            this.cdr.detectChanges();
+            this.router.navigate(['/dashboard']);
+        },
+        error: (err) => {
+            this.loading = false;
+            const errData = err.error || {};
+            this.pwdErrorMsg = errData.message || errData.error || 'Failed to change password.';
+            this.cdr.detectChanges();
+        }
     });
   }
 

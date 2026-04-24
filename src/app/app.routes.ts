@@ -15,14 +15,17 @@ export const routes: Routes = [
   { 
     path: 'dashboard', 
     component: DashboardComponent,
+    canActivate: [AuthGuard]
   },
   { 
     path: 'voting', 
     component: Voting,
+    canActivate: [AuthGuard]
   },
   { 
     path: 'results', 
     component: ResultsComponent,
+    canActivate: [AuthGuard]
   },
   {
     path: 'admin-portal',

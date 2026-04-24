@@ -53,6 +53,14 @@ export class ApiService {
     );
   }
 
+  changePassword(data: any): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.baseUrl}/voter/change-password`,
+      data,
+      { headers: this.headers(), withCredentials: false }
+    );
+  }
+
   castVote(data: {
     voter_id: number;
     seat_id: number;
