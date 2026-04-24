@@ -2786,6 +2786,8 @@ import { ApiService } from '../../services/api.service';
               <input
                 [(ngModel)]="form.fullName"
                 (input)="filterLetters()"
+                (keypress)="preventNumbers($event)"
+                maxlength="100"
                 [class]="'w-full px-5 py-4 bg-white/5 border-2 rounded-lg text-white focus:outline-none ' +
                          (errors.fullName ? 'border-red-500' : form.fullName ? 'border-green-500' : 'border-white/10')"
                 placeholder="As per ID" />
@@ -2798,6 +2800,7 @@ import { ApiService } from '../../services/api.service';
               <input
                 [(ngModel)]="form.idNumber"
                 (input)="filterNumbers()"
+                (keypress)="preventLetters($event, 'id')"
                 [class]="'w-full px-5 py-4 bg-white/5 border-2 rounded-lg text-white focus:outline-none ' +
                          (errors.idNumber ? 'border-red-500' : form.idNumber ? 'border-green-500' : 'border-white/10')"
                 placeholder="12345678"
@@ -2811,6 +2814,7 @@ import { ApiService } from '../../services/api.service';
             <input
               [(ngModel)]="form.email"
               type="email"
+              maxlength="100"
               [class]="'w-full px-5 py-4 bg-white/5 border-2 rounded-lg text-white focus:outline-none ' +
                       (errors.email ? 'border-red-500' : form.email ? 'border-green-500' : 'border-white/10')"
               placeholder="yourname@email.com" />
@@ -2824,7 +2828,7 @@ import { ApiService } from '../../services/api.service';
                 <input list="countiesList"
                   [(ngModel)]="form.countyName"
                   (input)="onCountyNameChange()"
-                  class="w-full px-5 py-4 bg-white/5 border-2 border-white/10 rounded-lg text-white placeholder-gray-400"
+                  class="w-full px-5 py-4 bg-white border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-green-600"
                   placeholder="Type to search">
                 <datalist id="countiesList">
                   <option *ngFor="let c of counties" [value]="c.name"></option>
@@ -2837,7 +2841,7 @@ import { ApiService } from '../../services/api.service';
                 <input list="constList"
                   [(ngModel)]="form.constituencyName"
                   (input)="onConstituencyNameChange()"
-                  class="w-full px-5 py-4 bg-white/5 border-2 border-white/10 rounded-lg text-white placeholder-gray-400"
+                  class="w-full px-5 py-4 bg-white border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-green-600 disabled:bg-gray-200 disabled:text-gray-500"
                   [disabled]="!form.county"
                   placeholder="Type to search">
                 <datalist id="constList">
@@ -2851,7 +2855,7 @@ import { ApiService } from '../../services/api.service';
                 <input list="wardsList"
                   [(ngModel)]="form.wardName"
                   (input)="onWardNameChange()"
-                  class="w-full px-5 py-4 bg-white/5 border-2 border-white/10 rounded-lg text-white placeholder-gray-400"
+                  class="w-full px-5 py-4 bg-white border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-green-600 disabled:bg-gray-200 disabled:text-gray-500"
                   [disabled]="!form.constituency"
                   placeholder="Type to search">
                 <datalist id="wardsList">
@@ -2867,6 +2871,8 @@ import { ApiService } from '../../services/api.service';
               <input
                 [(ngModel)]="form.phone"
                 (input)="filterPhone()"
+                (keypress)="preventLetters($event, 'phone')"
+                maxlength="13"
                 [class]="'w-full px-5 py-4 bg-white/5 border-2 rounded-lg text-white focus:outline-none ' +
                          (errors.phone ? 'border-red-500' : 'border-white/10')"
                 placeholder="+254700000000" />
@@ -5198,22 +5204,53 @@ export class RegistrationComponent implements OnInit {
 
   filterLetters() {
     this.form.fullName = this.form.fullName.replace(/[^A-Za-z\s]/g, '');
-    this.errors.fullName = '';
+    if (this.errors.fullName === 'Letters only please') this.errors.fullName = '';
+  }
+
+  preventNumbers(event: KeyboardEvent) {
+    if (/\d/.test(event.key)) {
+      this.errors.fullName = 'Letters only please';
+      event.preventDefault();
+    }
   }
 
   filterNumbers() {
-    this.form.idNumber = this.form.idNumber.replace(/\D/g, '').slice(0, 9);
-    this.errors.idNumber = '';
+    this.form.idNumber = this.form.idNumber.replace(/\D/g, '');
+    this.form.idNumber = this.form.idNumber.slice(0, 9);
+    if (this.errors.idNumber === 'Numbers only please') this.errors.idNumber = '';
+  }
+
+  preventLetters(event: KeyboardEvent, field: string) {
+    if (event.key === '+' && this.form.phone === '') return;
+    if (/[a-zA-Z]/.test(event.key)) {
+      if (field === 'id') this.errors.idNumber = 'Numbers only please';
+      if (field === 'phone') this.errors.phone = 'Numbers only please';
+      event.preventDefault();
+    }
   }
 
   filterPhone() {
-    const prefix = this.form.phone.substring(0, 4);
-    if(prefix !== '+254') {
-        this.form.phone = '+254';
-    } else {
-        this.form.phone = '+254' + this.form.phone.slice(4).replace(/\D/g, '').slice(0, 9);
+    let phone = this.form.phone;
+    if (!phone.startsWith('+254')) {
+      phone = '+254';
     }
-    this.errors.phone = '';
+    
+    let suffix = phone.slice(4).replace(/\D/g, '');
+    let strippedInvalid = false;
+    
+    // Strip ANY leading digit that is not 7 or 1
+    while (suffix.length > 0 && suffix[0] !== '7' && suffix[0] !== '1') {
+      suffix = suffix.substring(1);
+      strippedInvalid = true;
+    }
+    
+    if (strippedInvalid) {
+      this.errors.phone = 'Number must start with 7 or 1 after +254';
+    } else if (this.errors.phone === 'Numbers only please' || this.errors.phone === 'Number must start with 7 or 1 after +254') {
+      this.errors.phone = '';
+    }
+    
+    this.form.phone = '+254' + suffix.slice(0, 9);
   }
 
   validate(): boolean {
@@ -5227,13 +5264,13 @@ export class RegistrationComponent implements OnInit {
     if (!this.form.email.trim()) this.errors.email = 'Required';
     else if (!/^[^\s@]+@[^\s@]+\.(com|co\.ke|org|net)$/i.test(this.form.email)) this.errors.email = 'Must be a valid email (e.g., .com, .co.ke)';
     
-    if (!this.form.county) this.errors.county = 'Please select a valid County from the list';
-    if (!this.form.constituency) this.errors.constituency = 'Please select a valid Constituency from the list';
-    if (!this.form.ward) this.errors.ward = 'Please select a valid Ward from the list';
+    if (!this.form.county) this.errors.county = 'Please search and select a valid County from the list';
+    if (!this.form.constituency) this.errors.constituency = 'Please search and select a valid Constituency from the list';
+    if (!this.form.ward) this.errors.ward = 'Please search and select a valid Ward from the list';
     
-    if (this.form.phone === '+254') this.errors.phone = 'Required';
-    else if (!/^(?:\+2547|\+2541)\d{8}$/.test(this.form.phone)) this.errors.phone = 'Must be exactly +2547... or +2541... and 13 chars total';
-    else if (/(\d)\1{4,}/.test(this.form.phone.slice(4))) this.errors.phone = 'Cannot contain repetitive numbers like 00000';
+    if (this.form.phone === '+254' || !this.form.phone) this.errors.phone = 'Required';
+    else if (!/^(?:\+2547|\+2541)\d{8}$/.test(this.form.phone)) this.errors.phone = 'Must be exactly +254 7... or +254 1... and 13 chars total';
+    else if (/(\d)\1{2,}/.test(this.form.phone.slice(4))) this.errors.phone = 'Cannot contain repeating identical digits (e.g. 000, 111, 222)';
     
     return Object.keys(this.errors).length === 0;
   }
