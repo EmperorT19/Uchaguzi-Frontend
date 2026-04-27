@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
@@ -15,7 +15,7 @@ Chart.register(...registerables);
   templateUrl: './analytics.html',
   styleUrls: ['./analytics.css']
 })
-export class AnalyticsComponent implements OnInit {
+export class AnalyticsComponent implements OnInit, OnDestroy {
   // Cascading Filter Data
   provinces = ['Coast', 'North Eastern', 'Eastern', 'Central', 'Rift Valley', 'Western', 'Nyanza', 'Nairobi'];
   
@@ -48,9 +48,18 @@ export class AnalyticsComponent implements OnInit {
   
   constructor(private http: HttpClient, private router: Router, public translation: TranslationService) {}
 
+  private langChangedHandler = () => {
+    this.renderOverviewChart();
+  };
+
   ngOnInit() {
+    window.addEventListener('langChanged', this.langChangedHandler);
     this.setupThemeListener();
     this.fetchAllCandidates();
+  }
+
+  ngOnDestroy() {
+    window.removeEventListener('langChanged', this.langChangedHandler);
   }
 
   setupThemeListener() {

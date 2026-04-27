@@ -14,6 +14,7 @@ const I18N: any = {
     backToSeats: 'Back to Seats', selectCandidate: 'Select your candidate',
     proceedConfirm: 'Proceed to Confirm Vote', noCandidates: 'No candidates found for this seat in your region.',
     votedSuccess: 'Voted Successfully',
+    confirmVote: 'Confirm Vote', cancelVote: 'Cancel', voteWarning: 'This action cannot be undone.',
 
     // Dashboard
     activeElections: 'Active Elections', currentVotingSession: 'Current Voting Session', endsIn: 'Ends in',
@@ -65,6 +66,7 @@ const I18N: any = {
     backToSeats: 'Rudi Nyuma', selectCandidate: 'Chagua mgombea wako',
     proceedConfirm: 'Endelea Kuthibitisha', noCandidates: 'Hakuna wagombea waliopatikana kwa kiti hiki katika eneo lako.',
     votedSuccess: 'Imepigwa Kura Kikamilifu',
+    confirmVote: 'Thibitisha Kura', cancelVote: 'Ghairi', voteWarning: 'Hatua hii haiwezi kubatilishwa.',
 
     // Dashboard
     activeElections: 'Uchaguzi Unaoendelea', currentVotingSession: 'Kipindi cha Upigaji Kura', endsIn: 'Inaisha baada ya',
@@ -110,6 +112,8 @@ const I18N: any = {
 })
 export class TranslationService {
   currentLang: "en" | "sw" = "en";
+  /** Increments every time the language changes — bind this in templates to force re-render */
+  langTick = 0;
 
   constructor() {
     const saved = localStorage.getItem("lang");
@@ -124,7 +128,8 @@ export class TranslationService {
 
   toggleLang() {
     this.currentLang = this.currentLang === "en" ? "sw" : "en";
+    this.langTick++;
     localStorage.setItem("lang", this.currentLang);
-    window.dispatchEvent(new Event('langChanged'));
+    window.dispatchEvent(new CustomEvent('langChanged', { detail: { lang: this.currentLang } }));
   }
 }

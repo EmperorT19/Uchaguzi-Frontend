@@ -1,0 +1,15 @@
+[build]
+  command   = "npm run build && sed -i 's|NETLIFY_API_URL|'\"$API_URL\"'|g' dist/voting/browser/index.html"
+  publish   = "dist/voting/browser"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# ─── Set this in Netlify dashboard → Site settings → Environment Variables ───
+# API_URL = https://your-railway-backend.up.railway.app
+
+# SPA fallback — all routes serve index.html so Angular Router works
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

@@ -303,7 +303,7 @@
 //   goToRegistration() { this.modal = null; this.page = 'registration'; }
 //   goToLanding() { this.modal = null; this.page = 'landing'; }
 // }
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -347,10 +347,10 @@ import { TranslationService } from '../../services/translation.service';
       <div *ngIf="showSuccess" class="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50 p-4">
         <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-10 max-w-md border-2 border-green-600 text-center">
           <div class="text-6xl mb-4">✅</div>
-          <h3 class="text-3xl font-bold text-white mb-4">Vote Cast Successfully!</h3>
-          <p class="text-gray-400 mb-6">Your vote for <span class="text-green-400 font-bold">{{ selectedCandidate?.name }}</span> has been recorded.</p>
+          <h3 class="text-3xl font-bold text-white mb-4">{{t('votedSuccess')}}</h3>
+          <p class="text-gray-400 mb-6">{{t('selectCandidate')}} <span class="text-green-400 font-bold">{{ selectedCandidate?.name }}</span></p>
           <button (click)="showSuccess = false; goBack()" class="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-lg">
-            Back to Dashboard
+            {{t('backToSeats')}}
           </button>
         </div>
       </div>
@@ -359,17 +359,17 @@ import { TranslationService } from '../../services/translation.service';
       <div *ngIf="showConfirm" class="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50 p-4">
         <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-10 max-w-md border-2 border-yellow-600 text-center">
           <div class="text-6xl mb-4">⚠️</div>
-          <h3 class="text-2xl font-bold text-white mb-4">Confirm Your Vote</h3>
-          <p class="text-gray-300 mb-2">You are voting for:</p>
+          <h3 class="text-2xl font-bold text-white mb-4">{{t('proceedConfirm')}}</h3>
+          <p class="text-gray-300 mb-2">{{t('selectCandidate')}}:</p>
           <p class="text-2xl font-bold text-white mb-1">{{ selectedCandidate?.name }}</p>
           <p class="text-gray-400 mb-6">{{ selectedCandidate?.party }}</p>
-          <p class="text-red-400 text-sm mb-6">⚠️ This action cannot be undone.</p>
+          <p class="text-red-400 text-sm mb-6">⚠️ {{t('voteWarning')}}</p>
           <div class="flex gap-4">
             <button (click)="showConfirm = false" class="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl">
-              Cancel
+              {{t('cancelVote')}}
             </button>
             <button (click)="confirmVote()" class="flex-1 py-3 bg-gradient-to-r from-red-600 to-green-600 text-white font-bold rounded-xl">
-              Confirm Vote
+              {{t('confirmVote')}}
             </button>
           </div>
         </div>
@@ -458,17 +458,20 @@ import { TranslationService } from '../../services/translation.service';
           </div>
 
           <div *ngIf="candidates.length > 0" class="mb-6">
-            <input [(ngModel)]="searchTerm" type="text" [placeholder]="t('search')" 
-                   class="w-full px-5 py-4 bg-gray-900/80 border-2 border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500 transition-colors shadow-lg" />
+            <input [(ngModel)]="searchTerm" type="text" [placeholder]="t('search')"
+                   class="w-full px-5 py-4 rounded-xl border-2 focus:outline-none transition-colors shadow-lg"
+                   style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color)" />
           </div>
 
           <div class="grid gap-4">
             <div *ngFor="let c of filteredCandidates"
                  [ngClass]="{
-                   'border-green-500 bg-green-900/20': selectedCandidate?.id === c.id,
-                   'border-white/10 hover:border-white/30': selectedCandidate?.id !== c.id
+                   'border-green-500': selectedCandidate?.id === c.id,
+                   'hover:opacity-90': selectedCandidate?.id !== c.id
                  }"
-                 class="bg-gray-900/80 rounded-2xl p-6 border-2 cursor-pointer transition-all"
+                 class="rounded-2xl p-6 border-2 cursor-pointer transition-all"
+                 [style.background]="selectedCandidate?.id === c.id ? 'var(--bg-primary)' : 'var(--bg-card)'"
+                 [style.borderColor]="selectedCandidate?.id === c.id ? 'var(--accent-color)' : 'var(--border-color)'"
                  (click)="selectCandidate(c)">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
@@ -476,22 +479,22 @@ import { TranslationService } from '../../services/translation.service';
                     {{ c.ballot_number || '#' }}
                   </div>
                   <div>
-                    <h3 class="text-xl font-bold text-white">{{ c.name }}</h3>
-                    <p class="text-gray-400">{{ c.party }}</p>
+                    <h3 class="text-xl font-bold" style="color: var(--text-primary)">{{ c.name }}</h3>
+                    <p style="color: var(--text-secondary)">{{ c.party }}</p>
                   </div>
                 </div>
-                <div *ngIf="selectedCandidate?.id === c.id" class="text-green-400 text-2xl">✓</div>
+                <div *ngIf="selectedCandidate?.id === c.id" style="color: var(--accent-color)" class="text-2xl">✓</div>
               </div>
 
               <!-- AI Summarize Button & Display block -->
-              <div class="mt-4 pt-4 border-t border-white/10" (click)="$event.stopPropagation()">
+              <div class="mt-4 pt-4 border-t" [style.borderColor]="'var(--border-color)'" (click)="$event.stopPropagation()">
                 <button *ngIf="!c.ai_summary && !loadingSummaries[c.id]" (click)="summarizeCandidate(c.id)" class="text-sm font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-2">
                   ✨ AI: Summarize Candidate
                 </button>
-                <div *ngIf="loadingSummaries[c.id]" class="flex items-center gap-2 text-sm text-gray-400">
+                <div *ngIf="loadingSummaries[c.id]" class="flex items-center gap-2 text-sm" style="color: var(--text-secondary)">
                   <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div> Asking AI...
                 </div>
-                <div *ngIf="c.ai_summary" class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 text-sm text-gray-300">
+                <div *ngIf="c.ai_summary" class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 text-sm" style="color: var(--text-secondary)">
                   <span class="font-bold text-blue-400 block mb-1">✨ AI Summary</span>
                   {{ c.ai_summary }}
                 </div>
@@ -511,7 +514,7 @@ import { TranslationService } from '../../services/translation.service';
   `,
   styles: []
 })
-export class Voting implements OnInit {
+export class Voting implements OnInit, OnDestroy {
   currentUser: Voter | null = null;
   activeSeat: string | null = null;
   activeSeatId: number | null = null;
@@ -543,6 +546,8 @@ export class Voting implements OnInit {
   seatMeta = SEAT_META;
   seatList = Object.entries(SEAT_META).map(([key, val]) => ({ key, ...val }));
 
+  private langChangedHandler = () => this.cdr.detectChanges();
+
   constructor(
     private api: ApiService,
     private authService: AuthService,
@@ -552,6 +557,7 @@ export class Voting implements OnInit {
   ) {}
 
   ngOnInit() {
+    window.addEventListener('langChanged', this.langChangedHandler);
     this.currentUser = this.authService.getCurrentUser();
     if (!this.currentUser) {
       this.router.navigate(['/login']);
@@ -661,5 +667,8 @@ export class Voting implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/']);
+  }
+  ngOnDestroy() {
+    window.removeEventListener('langChanged', this.langChangedHandler);
   }
 }

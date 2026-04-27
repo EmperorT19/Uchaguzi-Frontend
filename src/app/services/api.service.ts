@@ -6,7 +6,11 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://127.0.0.1:8000';
+  // In production: set API_URL in Netlify environment variables to your Railway backend URL
+  // e.g. https://your-app.up.railway.app
+  private baseUrl = (window as any).__env?.API_URL
+    || (globalThis as any)['NG_APP_API_URL']
+    || 'http://127.0.0.1:8000';
 
   constructor(private http: HttpClient) {}
 

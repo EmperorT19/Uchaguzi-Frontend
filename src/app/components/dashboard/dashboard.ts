@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
@@ -17,7 +17,7 @@ const SEATS = [
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="min-h-screen transition-colors duration-300" style="background: var(--bg-primary); color: var(--text-primary)">
+    <div class="min-h-screen transition-colors duration-300" style="background: var(--bg-primary); color: var(--text-primary)" [attr.data-lang]="translation.langTick">
       <!-- Navigation -->
       <div class="backdrop-blur-md border-b sticky top-0 z-40 transition-colors duration-300" style="background: var(--header-bg); border-color: var(--border-color)">
         <div class="container mx-auto px-8 py-4">
@@ -115,13 +115,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get votingProgress(): number {
     return Math.round((this.votedCount / this.seats.length) * 100);
   }
+  private langChangedHandler = () => this.cdr.detectChanges();
+
   constructor(
     private api: ApiService,
     private authService: AuthService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
     public translation: TranslationService
   ) {}
   ngOnInit() {
+    window.addEventListener('langChanged', this.langChangedHandler);
     this.currentUser = this.authService.getCurrentUser();
     if (!this.currentUser) {
       this.router.navigate(['/login']);
@@ -140,6 +144,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   ngOnDestroy() {
     clearInterval(this.interval);
+    window.removeEventListener('langChanged', this.langChangedHandler);
   }
   hasVoted(seatType: string): boolean {
     return !!this.currentUser?.has_voted?.[seatType];

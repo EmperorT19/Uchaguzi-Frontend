@@ -296,6 +296,8 @@ export class ResultsComponent implements OnInit, OnDestroy {
 
   t(key: string): string { return this.translation.t(key); }
 
+  private langChangedHandler = () => this.cdr.detectChanges();
+
   constructor(
     private api: ApiService,
     private authService: AuthService,
@@ -305,12 +307,14 @@ export class ResultsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    window.addEventListener('langChanged', this.langChangedHandler);
     this.loadResults();
     this.refreshInterval = setInterval(() => this.loadResults(), 2000);
   }
 
   ngOnDestroy() {
     clearInterval(this.refreshInterval);
+    window.removeEventListener('langChanged', this.langChangedHandler);
   }
 
   loadResults() {

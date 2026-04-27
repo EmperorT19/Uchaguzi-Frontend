@@ -286,6 +286,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    window.addEventListener('langChanged', () => this.cdr.detectChanges());
     const savedToken = localStorage.getItem('uchaguzi_admin_token');
     if (savedToken) {
       this.token = savedToken;
