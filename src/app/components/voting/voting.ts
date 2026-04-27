@@ -303,7 +303,7 @@
 //   goToRegistration() { this.modal = null; this.page = 'registration'; }
 //   goToLanding() { this.modal = null; this.page = 'landing'; }
 // }
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -319,35 +319,14 @@ const SEAT_META: { [key: string]: { name: string; icon: string; level: string } 
   mca:         { name: 'Member of County Assembly',    icon: '🏘️', level: 'Ward' }
 };
 
-const I18N: any = {
-  en: { 
-     dashboard: 'Dashboard', vote: 'Vote', results: 'Results', logout: 'Logout',
-     ballotJourney: 'Your Ballot Journey', completed: 'Completed', allDone: 'ALL BALLOTS COMPLETED!',
-     castVote: 'Cast Your Vote', selectSeat: 'Select a seat to vote for', voteNow: 'Vote Now',
-     backToSeats: 'Back to Seats', selectCandidate: 'Select your candidate',
-     proceedConfirm: 'Proceed to Confirm Vote', search: 'Search by candidate name or party...',
-     noCandidates: 'No candidates found for this seat in your region.',
-     votedSuccess: 'Voted Successfully',
-     seat_president: 'President', seat_governor: 'Governor', seat_senator: 'Senator', seat_mp: 'Member of Parliament', seat_woman_rep: 'Woman Representative', seat_mca: 'Member of County Assembly'
-  },
-  sw: {
-     dashboard: 'Dashibodi', vote: 'Kura', results: 'Matokeo', logout: 'Toka',
-     ballotJourney: 'Hatua Zako Za Kura', completed: 'Zimekamilika', allDone: 'UMEPIGA KURA ZOTE!',
-     castVote: 'Piga Kura Yako', selectSeat: 'Chagua kiti cha kupigia kura', voteNow: 'Piga Kura Sasa',
-     backToSeats: 'Rudi Nyuma', selectCandidate: 'Chagua mgombea wako',
-     proceedConfirm: 'Endelea Kuthibitisha', search: 'Tafuta kwa jina au chama...',
-     noCandidates: 'Hakuna wagombea waliopatikana kwa kiti hiki katika eneo lako.',
-     votedSuccess: 'Imepigwa Kura Kikamilifu',
-     seat_president: 'Rais', seat_governor: 'Gavana', seat_senator: 'Seneta', seat_mp: 'Mbunge', seat_woman_rep: 'Mwakilishi wa Wanawake', seat_mca: 'Mwakilishi wa Wadi'
-  }
-};
+import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-voting',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
+    <div class="min-h-screen transition-colors duration-300" style="background: var(--bg-primary); color: var(--text-primary)">
 
       <!-- Loading Skeleton overlay -->
       <div *ngIf="loading" class="fixed inset-0 bg-black/90 backdrop-blur z-50 p-8 overflow-y-auto pt-24 text-center">
@@ -368,10 +347,10 @@ const I18N: any = {
       <div *ngIf="showSuccess" class="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50 p-4">
         <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-10 max-w-md border-2 border-green-600 text-center">
           <div class="text-6xl mb-4">✅</div>
-          <h3 class="text-3xl font-bold text-white mb-4">Vote Cast Successfully!</h3>
-          <p class="text-gray-400 mb-6">Your vote for <span class="text-green-400 font-bold">{{ selectedCandidate?.name }}</span> has been recorded.</p>
+          <h3 class="text-3xl font-bold text-white mb-4">{{t('votedSuccess')}}</h3>
+          <p class="text-gray-400 mb-6">{{t('selectCandidate')}} <span class="text-green-400 font-bold">{{ selectedCandidate?.name }}</span></p>
           <button (click)="showSuccess = false; goBack()" class="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-lg">
-            Back to Dashboard
+            {{t('backToSeats')}}
           </button>
         </div>
       </div>
@@ -380,35 +359,37 @@ const I18N: any = {
       <div *ngIf="showConfirm" class="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50 p-4">
         <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-10 max-w-md border-2 border-yellow-600 text-center">
           <div class="text-6xl mb-4">⚠️</div>
-          <h3 class="text-2xl font-bold text-white mb-4">Confirm Your Vote</h3>
-          <p class="text-gray-300 mb-2">You are voting for:</p>
+          <h3 class="text-2xl font-bold text-white mb-4">{{t('proceedConfirm')}}</h3>
+          <p class="text-gray-300 mb-2">{{t('selectCandidate')}}:</p>
           <p class="text-2xl font-bold text-white mb-1">{{ selectedCandidate?.name }}</p>
           <p class="text-gray-400 mb-6">{{ selectedCandidate?.party }}</p>
-          <p class="text-red-400 text-sm mb-6">⚠️ This action cannot be undone.</p>
+          <p class="text-red-400 text-sm mb-6">⚠️ {{t('voteWarning')}}</p>
           <div class="flex gap-4">
             <button (click)="showConfirm = false" class="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl">
-              Cancel
+              {{t('cancelVote')}}
             </button>
             <button (click)="confirmVote()" class="flex-1 py-3 bg-gradient-to-r from-red-600 to-green-600 text-white font-bold rounded-xl">
-              Confirm Vote
+              {{t('confirmVote')}}
             </button>
           </div>
         </div>
       </div>
 
       <!-- Navigation -->
-      <div class="bg-black/40 backdrop-blur-md border-b border-white/10 sticky top-0 z-40">
+      <div class="backdrop-blur-md border-b sticky top-0 z-40 transition-colors duration-300" style="background: var(--header-bg); border-color: var(--border-color)">
         <div class="container mx-auto px-8 py-4 flex justify-between items-center">
           <div class="flex gap-4">
-            <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">{{t('dashboard')}}</button>
-            <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-black via-red-700 to-green-700 text-white shadow-lg border border-white/20">{{t('vote')}}</button>
-            <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">{{t('results')}}</button>
+            <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('dashboard')}}</button>
+            <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold shadow-lg transition" style="background: var(--accent-color); color: white; border: 1px solid var(--border-color)">{{t('vote')}}</button>
+            <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('results')}}</button>
+            <button (click)="goTo('/analytics')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('analytics')}}</button>
+            <button (click)="goTo('/admin-portal')" class="px-8 py-3 rounded-xl font-bold transition hover:opacity-80" style="background: transparent; color: #ef4444; border: 1px solid #ef4444">{{translation.t('adminPortal') || 'Admin Portal'}}</button>
           </div>
           <div class="flex gap-4 items-center">
-            <button (click)="toggleLang()" class="px-4 py-2 font-bold text-white bg-gray-800 rounded-lg border border-white/10 hover:bg-gray-700 transition">
-              {{ lang === 'en' ? 'SW' : 'EN' }}
+            <button (click)="translation.toggleLang()" class="px-4 py-2 font-bold rounded-lg transition" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">
+              {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
             </button>
-            <button (click)="logout()" class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-xl">{{t('logout')}}</button>
+            <button (click)="logout()" class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl shadow-lg transition-transform hover:scale-105">{{t('logout')}}</button>
           </div>
         </div>
       </div>
@@ -417,43 +398,46 @@ const I18N: any = {
         <!-- Seat selector -->
         <div *ngIf="!activeSeat">
           <!-- Voter Progress Tracker -->
-          <div class="mb-10 bg-gray-900/40 p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-center sm:text-left">
+          <div class="mb-10 p-8 rounded-3xl border shadow-2xl relative overflow-hidden text-center sm:text-left transition-colors" style="background: var(--bg-card); border-color: var(--border-color)">
             <div class="flex flex-col sm:flex-row justify-between items-center mb-4 relative z-10">
-              <h2 class="text-2xl font-bold text-white flex items-center gap-2">🗳️ {{t('ballotJourney')}}</h2>
-              <span class="text-green-400 font-black text-xl bg-green-900/30 px-4 py-1 rounded-full border border-green-500/30">
+              <h2 class="text-2xl font-bold flex items-center gap-2" style="color: var(--text-primary)">🗳️ {{t('ballotJourney')}}</h2>
+              <span class="font-black text-xl px-4 py-1 rounded-full border shadow-sm" style="color: var(--accent-color); border-color: var(--accent-color); background: var(--bg-primary)">
                 {{votedCount}}/{{seatList.length}} {{t('completed')}}
               </span>
             </div>
-            <div class="w-full bg-gray-800 rounded-full h-5 overflow-hidden shadow-inner relative z-10">
-              <div class="bg-gradient-to-r from-green-600 to-green-300 h-full rounded-full transition-all duration-1000 ease-out" 
+            <div class="w-full rounded-full h-5 overflow-hidden shadow-inner relative z-10 border" style="background: var(--bg-primary); border-color: var(--border-color)">
+              <div class="h-full rounded-full transition-all duration-1000 ease-out shadow-lg" 
+                   style="background: var(--accent-color)"
                    [style.width.%]="(votedCount / seatList.length) * 100"></div>
             </div>
-            <div *ngIf="votedCount === seatList.length" class="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent flex items-center justify-center animate-pulse"></div>
-            <p *ngIf="votedCount === seatList.length" class="text-green-400 mt-4 text-center font-black text-2xl tracking-widest animate-bounce relative z-10">🎉 {{t('allDone')}}</p>
+            <p *ngIf="votedCount === seatList.length" class="mt-4 text-center font-black text-2xl tracking-widest animate-bounce relative z-10" style="color: var(--accent-color)">🎉 {{t('allDone')}}</p>
           </div>
 
-          <h1 class="text-4xl font-bold text-white mb-2">{{t('castVote')}}</h1>
-          <p class="text-gray-400 mb-8">{{t('selectSeat')}}</p>
+          <h1 class="text-4xl font-bold mb-2" style="color: var(--text-primary)">{{t('castVote')}}</h1>
+          <p class="mb-8" style="color: var(--text-secondary)">{{t('selectSeat')}}</p>
 
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div *ngFor="let seat of seatList"
                  [ngClass]="{
-                   'border-green-400/30 bg-gradient-to-br from-green-600/20 to-green-800/20': currentUser?.has_voted?.[seat.key],
-                   'border-white/20 bg-gradient-to-br from-gray-800/90 to-black/90 hover:scale-105 cursor-pointer': !currentUser?.has_voted?.[seat.key]
+                   'hover:scale-105 cursor-pointer': !currentUser?.has_voted?.[seat.key]
                  }"
-                 class="rounded-3xl p-8 border-2 transition-all backdrop-blur-sm shadow-xl">
+                 class="rounded-3xl p-8 border-2 transition-all backdrop-blur-sm shadow-xl" 
+                 [style.background]="'var(--bg-card)'" 
+                 [style.border-color]="currentUser?.has_voted?.[seat.key] ? 'var(--accent-color)' : 'var(--border-color)'"
+                 [style.opacity]="currentUser?.has_voted?.[seat.key] ? '0.7' : '1'">
               <div class="flex items-center justify-between mb-4">
                 <span class="text-5xl">{{ seat.icon }}</span>
                 <span class="text-3xl">{{ currentUser?.has_voted?.[seat.key] ? '✅' : '⏳' }}</span>
               </div>
-              <h3 class="text-xl font-bold text-white mb-1">{{ t('seat_' + seat.key) }}</h3>
-              <p class="text-white/60 text-sm mb-4">{{ seat.level }} Level</p>
+              <h3 class="text-xl font-bold mb-1" style="color: var(--text-primary)">{{ t('seat_' + seat.key) }}</h3>
+              <p class="text-sm mb-4" style="color: var(--text-secondary)">{{ seat.level }} Level</p>
               <button *ngIf="!currentUser?.has_voted?.[seat.key]"
                       (click)="selectSeat(seat.key)"
-                      class="w-full py-3 bg-gradient-to-r from-red-700 via-black to-green-700 text-white font-bold rounded-lg border border-white/30">
+                      class="w-full py-3 text-white font-bold rounded-lg transition-transform hover:scale-105 shadow-lg"
+                      style="background: var(--accent-color)">
                 {{t('voteNow')}}
               </button>
-              <div *ngIf="currentUser?.has_voted?.[seat.key]" class="text-green-200 text-sm font-bold flex items-center gap-2">
+              <div *ngIf="currentUser?.has_voted?.[seat.key]" class="font-bold flex items-center gap-2" style="color: var(--accent-color)">
                 <span>✓</span> {{t('votedSuccess')}}
               </div>
             </div>
@@ -462,29 +446,32 @@ const I18N: any = {
 
         <!-- Candidate selection -->
         <div *ngIf="activeSeat">
-          <button (click)="activeSeat = null; candidates = []" class="mb-6 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
+          <button (click)="activeSeat = null; candidates = []" class="mb-6 px-6 py-3 rounded-lg border transition-colors" style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color)">
             ← {{t('backToSeats')}}
           </button>
 
-          <h1 class="text-4xl font-bold text-white mb-2">{{ t('seat_' + activeSeat) }}</h1>
-          <p class="text-gray-400 mb-8">{{t('selectCandidate')}}</p>
+          <h1 class="text-4xl font-bold mb-2" style="color: var(--text-primary)">{{ t('seat_' + activeSeat) }}</h1>
+          <p class="mb-8" style="color: var(--text-secondary)">{{t('selectCandidate')}}</p>
 
           <div *ngIf="candidates.length === 0 && !loading" class="text-gray-400 text-center py-12">
             {{t('noCandidates')}}
           </div>
 
           <div *ngIf="candidates.length > 0" class="mb-6">
-            <input [(ngModel)]="searchTerm" type="text" [placeholder]="t('search')" 
-                   class="w-full px-5 py-4 bg-gray-900/80 border-2 border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500 transition-colors shadow-lg" />
+            <input [(ngModel)]="searchTerm" type="text" [placeholder]="t('search')"
+                   class="w-full px-5 py-4 rounded-xl border-2 focus:outline-none transition-colors shadow-lg"
+                   style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color)" />
           </div>
 
           <div class="grid gap-4">
             <div *ngFor="let c of filteredCandidates"
                  [ngClass]="{
-                   'border-green-500 bg-green-900/20': selectedCandidate?.id === c.id,
-                   'border-white/10 hover:border-white/30': selectedCandidate?.id !== c.id
+                   'border-green-500': selectedCandidate?.id === c.id,
+                   'hover:opacity-90': selectedCandidate?.id !== c.id
                  }"
-                 class="bg-gray-900/80 rounded-2xl p-6 border-2 cursor-pointer transition-all"
+                 class="rounded-2xl p-6 border-2 cursor-pointer transition-all"
+                 [style.background]="selectedCandidate?.id === c.id ? 'var(--bg-primary)' : 'var(--bg-card)'"
+                 [style.borderColor]="selectedCandidate?.id === c.id ? 'var(--accent-color)' : 'var(--border-color)'"
                  (click)="selectCandidate(c)">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
@@ -492,22 +479,22 @@ const I18N: any = {
                     {{ c.ballot_number || '#' }}
                   </div>
                   <div>
-                    <h3 class="text-xl font-bold text-white">{{ c.name }}</h3>
-                    <p class="text-gray-400">{{ c.party }}</p>
+                    <h3 class="text-xl font-bold" style="color: var(--text-primary)">{{ c.name }}</h3>
+                    <p style="color: var(--text-secondary)">{{ c.party }}</p>
                   </div>
                 </div>
-                <div *ngIf="selectedCandidate?.id === c.id" class="text-green-400 text-2xl">✓</div>
+                <div *ngIf="selectedCandidate?.id === c.id" style="color: var(--accent-color)" class="text-2xl">✓</div>
               </div>
 
               <!-- AI Summarize Button & Display block -->
-              <div class="mt-4 pt-4 border-t border-white/10" (click)="$event.stopPropagation()">
+              <div class="mt-4 pt-4 border-t" [style.borderColor]="'var(--border-color)'" (click)="$event.stopPropagation()">
                 <button *ngIf="!c.ai_summary && !loadingSummaries[c.id]" (click)="summarizeCandidate(c.id)" class="text-sm font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-2">
                   ✨ AI: Summarize Candidate
                 </button>
-                <div *ngIf="loadingSummaries[c.id]" class="flex items-center gap-2 text-sm text-gray-400">
+                <div *ngIf="loadingSummaries[c.id]" class="flex items-center gap-2 text-sm" style="color: var(--text-secondary)">
                   <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div> Asking AI...
                 </div>
-                <div *ngIf="c.ai_summary" class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 text-sm text-gray-300">
+                <div *ngIf="c.ai_summary" class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3 text-sm" style="color: var(--text-secondary)">
                   <span class="font-bold text-blue-400 block mb-1">✨ AI Summary</span>
                   {{ c.ai_summary }}
                 </div>
@@ -527,7 +514,7 @@ const I18N: any = {
   `,
   styles: []
 })
-export class Voting implements OnInit {
+export class Voting implements OnInit, OnDestroy {
   currentUser: Voter | null = null;
   activeSeat: string | null = null;
   activeSeatId: number | null = null;
@@ -540,10 +527,7 @@ export class Voting implements OnInit {
 
   loadingSummaries: { [key: number]: boolean } = {};
   searchTerm: string = '';
-  lang: 'en' | 'sw' = 'en';
-
-  t(key: string): string { return I18N[this.lang][key] || key; }
-  toggleLang() { this.lang = this.lang === 'en' ? 'sw' : 'en'; }
+  t(key: string): string { return this.translation.t(key); }
 
   get votedCount(): number {
     if (!this.currentUser || !this.currentUser.has_voted) return 0;
@@ -562,14 +546,18 @@ export class Voting implements OnInit {
   seatMeta = SEAT_META;
   seatList = Object.entries(SEAT_META).map(([key, val]) => ({ key, ...val }));
 
+  private langChangedHandler = () => this.cdr.detectChanges();
+
   constructor(
     private api: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public translation: TranslationService
   ) {}
 
   ngOnInit() {
+    window.addEventListener('langChanged', this.langChangedHandler);
     this.currentUser = this.authService.getCurrentUser();
     if (!this.currentUser) {
       this.router.navigate(['/login']);
@@ -679,5 +667,8 @@ export class Voting implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/']);
+  }
+  ngOnDestroy() {
+    window.removeEventListener('langChanged', this.langChangedHandler);
   }
 }

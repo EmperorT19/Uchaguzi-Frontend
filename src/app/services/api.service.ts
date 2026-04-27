@@ -6,7 +6,11 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://127.0.0.1:8000';
+  // In production: set API_URL in Netlify environment variables to your Railway backend URL
+  // e.g. https://your-app.up.railway.app
+  private baseUrl = (window as any).__env?.API_URL
+    || (globalThis as any)['NG_APP_API_URL']
+    || 'http://127.0.0.1:8000';
 
   constructor(private http: HttpClient) {}
 
@@ -48,6 +52,14 @@ export class ApiService {
   }> {
     return this.http.post<any>(
       `${this.baseUrl}/login`,
+      data,
+      { headers: this.headers(), withCredentials: false }
+    );
+  }
+
+  changePassword(data: any): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.baseUrl}/voter/change-password`,
       data,
       { headers: this.headers(), withCredentials: false }
     );
@@ -153,5 +165,10 @@ export class ApiService {
   restartElection(token: string): Observable<any> {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
     return this.http.post<any>(`${this.baseUrl}/system-admin/restart-voting`, {}, { headers });
+  }
+
+  getAdminLeaders(token: string): Observable<any[]> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.get<any[]>(`${this.baseUrl}/results/leaders`, { headers });
   }
 }

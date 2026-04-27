@@ -141,7 +141,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth';
-
+import { TranslationService } from '../../services/translation.service';
 const SEAT_META: { [key: string]: { name: string; icon: string } } = {
   president:  { name: 'President',                icon: '🇰🇪' },
   governor:   { name: 'Governor',                  icon: '🏛️' },
@@ -151,33 +151,13 @@ const SEAT_META: { [key: string]: { name: string; icon: string } } = {
   mca:        { name: 'Member of County Assembly', icon: '🏘️' }
 };
 
-const I18N: any = {
-  en: {
-    dashboard: 'Dashboard', vote: 'Vote', results: 'Results', logout: 'Logout',
-    liveResults: 'Live Results', liveRefreshes: 'Live · refreshes every 2s',
-    noResults: 'No results available yet.', totalVotes: 'Total Votes:', leading: 'LEADING',
-    loginToView: 'Please login to view your results.', failedToLoad: 'Failed to load results. Please try again.',
-    trendingParties: 'Trending Parties', votes: 'votes',
-    seat_president: 'President', seat_governor: 'Governor', seat_senator: 'Senator',
-    seat_mp: 'Member of Parliament', seat_woman_rep: 'Woman Representative', seat_mca: 'Member of County Assembly'
-  },
-  sw: {
-    dashboard: 'Dashibodi', vote: 'Kura', results: 'Matokeo', logout: 'Toka',
-    liveResults: 'Matokeo Moja kwa Moja', liveRefreshes: 'Moja kwa moja · inasasishwa kila 2s',
-    noResults: 'Hakuna matokeo yaliyopatikana bado.', totalVotes: 'Jumla ya Kura:', leading: 'KIONGOZI',
-    loginToView: 'Tafadhali ingia ili uone matokeo yako.', failedToLoad: 'Imeshindwa kupakia matokeo. Jaribu tena.',
-    trendingParties: 'Vyama Vinavyovuma', votes: 'kura',
-    seat_president: 'Rais', seat_governor: 'Gavana', seat_senator: 'Seneta',
-    seat_mp: 'Mbunge', seat_woman_rep: 'Mwakilishi wa Wanawake', seat_mca: 'Mwakilishi wa Wodi'
-  }
-};
 
 @Component({
   selector: 'app-results',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="min-h-screen bg-black">
+    <div class="min-h-screen transition-colors duration-300" style="background: var(--bg-primary); color: var(--text-primary)">
       <!-- Loading Skeleton -->
       <div *ngIf="loading" class="fixed inset-0 bg-black/90 backdrop-blur z-50 p-8 overflow-y-auto pt-24 text-center">
         <div class="max-w-7xl mx-auto">
@@ -196,16 +176,18 @@ const I18N: any = {
       </div>
 
       <!-- Navigation -->
-      <div class="bg-gradient-to-r from-black via-gray-900 to-black border-b border-red-600 sticky top-0 z-40">
+      <div class="backdrop-blur-md border-b sticky top-0 z-40 transition-colors duration-300" style="background: var(--header-bg); border-color: var(--border-color)">
         <div class="container mx-auto px-8 py-4 flex justify-between items-center">
           <div class="flex gap-4">
-            <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold bg-gray-800/50 text-gray-300 hover:bg-gray-700">{{t('dashboard')}}</button>
-            <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold bg-gray-800/50 text-gray-300 hover:bg-gray-700">{{t('vote')}}</button>
-            <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-red-600 to-green-600 text-white shadow-lg">{{t('results')}}</button>
+            <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('dashboard')}}</button>
+            <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('vote')}}</button>
+            <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold shadow-lg transition" style="background: var(--accent-color); color: white; border: 1px solid var(--border-color)">{{t('results')}}</button>
+            <button (click)="goTo('/analytics')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{translation.t('analytics')}}</button>
+            <button (click)="goTo('/admin-portal')" class="px-8 py-3 rounded-xl font-bold transition hover:opacity-80" style="background: transparent; color: #ef4444; border: 1px solid #ef4444">{{translation.t('adminPortal') || 'Admin Portal'}}</button>
           </div>
           <div class="flex gap-4 items-center">
-            <button (click)="toggleLang()" class="px-4 py-2 font-bold text-white bg-gray-800 rounded-lg hover:bg-gray-700 transition">
-              {{ lang === 'en' ? 'SW' : 'EN' }}
+            <button (click)="translation.toggleLang()" class="px-4 py-2 font-bold rounded-lg border transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color)">
+              {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
             </button>
             <button (click)="logout()" class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl">{{t('logout')}}</button>
           </div>
@@ -213,11 +195,11 @@ const I18N: any = {
       </div>
 
       <!-- Content -->
-      <div class="min-h-screen bg-gradient-to-br from-black to-gray-900 p-8">
+      <div class="min-h-screen p-8 transition-colors duration-300" style="background: var(--bg-primary)">
         <div class="max-w-7xl mx-auto">
           <div class="flex items-center justify-between mb-8">
-            <h1 class="text-5xl font-bold text-white">{{t('liveResults')}}</h1>
-            <div class="flex items-center gap-2 text-sm text-gray-400">
+            <h1 class="text-5xl font-bold" style="color: var(--text-primary)">{{t('liveResults')}}</h1>
+            <div class="flex items-center gap-2 text-sm" style="color: var(--text-secondary)">
               <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse inline-block"></span>
               {{t('liveRefreshes')}}
             </div>
@@ -235,41 +217,43 @@ const I18N: any = {
           </div>
 
           <!-- Trending Party Leaderboard -->
-          <div *ngIf="trendingParties.length > 0" class="mb-10 bg-gray-900/40 p-8 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-center sm:text-left">
-            <h2 class="text-2xl font-bold text-white flex items-center gap-2 mb-6">📈 {{t('trendingParties')}}</h2>
+          <div *ngIf="trendingParties.length > 0" class="mb-10 p-8 rounded-3xl border shadow-2xl relative overflow-hidden text-center sm:text-left transition-colors" style="background: var(--bg-card); border-color: var(--border-color)">
+            <h2 class="text-2xl font-bold flex items-center gap-2 mb-6" style="color: var(--text-primary)">📈 {{t('trendingParties')}}</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div *ngFor="let party of trendingParties; let i = index" 
-                   class="bg-gray-800 rounded-xl p-4 border border-white/5 relative overflow-hidden transition-all hover:scale-105"
-                   [ngClass]="{'border-green-500/50 bg-green-900/20': i === 0}">
-                <div class="absolute top-0 right-0 h-full w-1" [ngClass]="i === 0 ? 'bg-green-500' : 'bg-gray-600'"></div>
-                <h3 class="text-xl font-bold text-white mb-1">#{{i+1}} {{party.name}}</h3>
-                <p class="text-green-400 font-bold text-lg">{{party.votes}} {{t('votes')}}</p>
+                   class="rounded-xl p-4 border relative overflow-hidden transition-all hover:scale-105"
+                   [ngStyle]="{'background': i === 0 ? 'var(--bg-primary)' : 'var(--bg-card)', 'border-color': i === 0 ? 'var(--accent-color)' : 'var(--border-color)'}">
+                <div class="absolute top-0 right-0 h-full w-1" [ngStyle]="{'background': i === 0 ? 'var(--accent-color)' : 'var(--border-color)'}"></div>
+                <h3 class="text-xl font-bold mb-1" style="color: var(--text-primary)">#{{i+1}} {{party.name}}</h3>
+                <p class="font-bold text-lg" style="color: var(--accent-color)">{{party.votes}} {{t('votes')}}</p>
               </div>
             </div>
           </div>
 
           <div class="grid gap-8">
-            <div *ngFor="let seat of results" class="bg-gray-900 rounded-2xl p-8 border-2 border-white/20">
+            <div *ngFor="let seat of results" class="rounded-2xl p-8 border shadow-sm transition-colors" style="background: var(--bg-card); border-color: var(--border-color)">
               <div class="flex items-center gap-4 mb-6">
                 <span class="text-5xl">{{ getSeatIcon(seat.seat_type) }}</span>
                 <div>
-                  <h2 class="text-3xl font-bold text-white">{{ getLocalizedSeatNameFull(seat) }}</h2>
-                  <p class="text-gray-400">{{t('totalVotes')}} <span class="text-white font-bold">{{ seat.total_votes }}</span></p>
+                  <h2 class="text-3xl font-bold" style="color: var(--text-primary)">{{ getLocalizedSeatNameFull(seat) }}</h2>
+                  <p style="color: var(--text-secondary)">{{t('totalVotes')}} <span class="font-bold" style="color: var(--text-primary)">{{ seat.total_votes }}</span></p>
                 </div>
               </div>
 
               <div class="space-y-4">
                 <div *ngFor="let c of seat.sorted_results; let i = index"
-                     class="bg-gray-800 rounded-lg p-4 relative overflow-hidden transition-all duration-[800ms] ease-out"
-                     [ngClass]="{ 'ring-2 ring-green-500 bg-gray-700/50 shadow-2xl scale-[1.02] z-10': i === 0 && seat.total_votes > 0 }">
+                     class="rounded-lg p-4 relative overflow-hidden transition-all duration-[800ms] ease-out border shadow-sm"
+                     style="background: var(--bg-primary); border-color: var(--border-color)"
+                     [ngStyle]="i === 0 && seat.total_votes > 0 ? {'border-color': 'var(--accent-color)', 'box-shadow': '0 4px 20px rgba(16, 185, 129, 0.15)', 'transform': 'scale(1.02)'} : {}">
                   <div *ngIf="i === 0 && seat.total_votes > 0"
-                       class="absolute top-0 right-0 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-lg">
+                       class="absolute top-0 right-0 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-lg"
+                       style="background: var(--accent-color)">
                     {{t('leading')}}
                   </div>
                   <div class="flex justify-between items-center mb-2">
                     <div>
-                      <h3 class="text-xl font-bold text-white">{{ c.full_name }}</h3>
-                      <p class="text-gray-400 text-sm">{{ c.party }}</p>
+                      <h3 class="text-xl font-bold" style="color: var(--text-primary)">{{ c.full_name }}</h3>
+                      <p class="text-sm" style="color: var(--text-secondary)">{{ c.party }}</p>
                     </div>
                     <div class="text-right">
                       <p class="text-2xl font-bold text-green-400 flex items-center justify-end gap-2">
@@ -307,27 +291,30 @@ export class ResultsComponent implements OnInit, OnDestroy {
   errorMsg = '';
   private refreshInterval: any;
 
-  lang: 'en' | 'sw' = 'en';
   trendingParties: any[] = [];
   previousResults: { [candidateId: number]: number } = {};
 
-  t(key: string): string { return I18N[this.lang][key] || key; }
-  toggleLang() { this.lang = this.lang === 'en' ? 'sw' : 'en'; }
+  t(key: string): string { return this.translation.t(key); }
+
+  private langChangedHandler = () => this.cdr.detectChanges();
 
   constructor(
     private api: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public translation: TranslationService
   ) {}
 
   ngOnInit() {
+    window.addEventListener('langChanged', this.langChangedHandler);
     this.loadResults();
     this.refreshInterval = setInterval(() => this.loadResults(), 2000);
   }
 
   ngOnDestroy() {
     clearInterval(this.refreshInterval);
+    window.removeEventListener('langChanged', this.langChangedHandler);
   }
 
   loadResults() {
@@ -403,7 +390,7 @@ export class ResultsComponent implements OnInit, OnDestroy {
     const role = this.getSeatName(seat.seat_type);
     const rawName = seat.seat_name || '';
 
-    if (this.lang === 'en') {
+    if (this.translation.currentLang === 'en') {
       if (seat.seat_type === 'president' || rawName.includes('President')) {
         return 'President of the Republic of Kenya';
       }
