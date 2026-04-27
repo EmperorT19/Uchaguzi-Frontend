@@ -5262,7 +5262,7 @@ export class RegistrationComponent implements OnInit {
     else if (!/^\d{7,9}$/.test(this.form.idNumber)) this.errors.idNumber = '7-9 digits required';
     
     if (!this.form.email.trim()) this.errors.email = 'Required';
-    else if (!/^[^\s@]+@[^\s@]+\.(com|co\.ke|org|net)$/i.test(this.form.email)) this.errors.email = 'Must be a valid email (e.g., .com, .co.ke)';
+    else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(this.form.email.trim())) this.errors.email = 'Enter a valid email (e.g., name@example.com)';
     
     if (!this.form.county) this.errors.county = 'Please search and select a valid County from the list';
     if (!this.form.constituency) this.errors.constituency = 'Please search and select a valid Constituency from the list';
