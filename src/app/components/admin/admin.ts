@@ -1,6 +1,7 @@
 import { Component, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslationService } from '../../services/translation.service';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 
@@ -48,11 +49,16 @@ import { ApiService } from '../../services/api.service';
           <div class="flex items-center gap-4">
             <span class="text-2xl animate-pulse">🔴</span>
             <div>
-              <h1 class="font-bold text-xl tracking-widest">ELECTION COMMAND CENTER</h1>
-              <p class="text-xs text-red-200">LIVE SYSTEM OBSERVATORY</p>
+              <h1 class="font-bold text-xl tracking-widest">{{ translation.t('electionCommandCenter') || 'ELECTION COMMAND CENTER' }}</h1>
+              <p class="text-xs text-red-200">{{ translation.t('liveSystemObservatory') || 'LIVE SYSTEM OBSERVATORY' }}</p>
             </div>
           </div>
-          <button (click)="logout()" class="px-6 py-2 bg-black/50 hover:bg-black text-white border border-red-500/30 rounded-lg transition-colors">END SESSION</button>
+          <div class="flex items-center gap-4">
+            <button (click)="translation.toggleLang()" class="px-4 py-2 bg-black/50 hover:bg-black text-white border border-red-500/30 rounded-lg font-bold transition-colors">
+              {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
+            </button>
+            <button (click)="goToDashboard()" class="px-6 py-2 bg-black/50 hover:bg-black text-white border border-red-500/30 rounded-lg transition-colors">{{ translation.t('goToDashboardUpper') || 'GO TO DASHBOARD' }}</button>
+          </div>
         </div>
 
         <div class="p-8 max-w-7xl mx-auto grid gap-8">
@@ -61,18 +67,18 @@ import { ApiService } from '../../services/api.service';
           <div class="bg-black border border-gray-800 rounded-2xl p-8 relative overflow-hidden">
              <div class="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
              <div class="flex justify-between items-center">
-                <div>
-                   <h2 class="text-2xl font-bold text-white mb-2">ELECTION STATUS: <span [ngClass]="{'text-green-500': stats?.is_active, 'text-red-500 animate-pulse': stats?.is_active === false}">{{stats === null ? 'LOADING...' : (stats?.is_active ? 'ACTIVE' : 'HALTED')}}</span></h2>
-                   <p class="text-gray-500 min-h-[40px]">System is currently {{stats?.is_active ? 'accepting public votes.' : 'blocking all incoming vote attempts.'}}</p>
+                 <div>
+                   <h2 class="text-2xl font-bold text-white mb-2">{{ translation.t('electionStatus') || 'ELECTION STATUS' }}: <span [ngClass]="{'text-green-500': stats?.is_active, 'text-red-500 animate-pulse': stats?.is_active === false}">{{stats === null ? 'LOADING...' : (stats?.is_active ? (translation.t('activeUpper') || 'ACTIVE') : 'HALTED')}}</span></h2>
+                   <p class="text-gray-500 min-h-[40px]">{{stats?.is_active ? translation.t('systemAccepting') : 'blocking all incoming vote attempts.'}}</p>
                 </div>
                 <div class="flex flex-col items-end gap-3">
                    <!-- Master Switch -->
                    <button (click)="toggleHalt()" [ngClass]="{'text-red-500 border-red-600 hover:bg-red-600 hover:text-white shadow-[0_0_15px_rgba(220,38,38,0.2)]': stats?.is_active, 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] border-red-500 hover:bg-red-700': stats?.is_active === false}" class="px-8 py-3 bg-red-600/20 border rounded-xl font-bold text-lg w-64 transition-all">
-                     {{stats?.is_active ? 'HALT ELECTION' : 'RESUME ELECTION'}}
+                     {{stats?.is_active ? (translation.t('haltElection') || 'HALT ELECTION') : 'RESUME ELECTION'}}
                    </button>
                    <!-- Wipe Switch -->
                    <button (click)="restartElection()" class="px-8 py-2 border border-orange-600/50 text-orange-500 hover:bg-orange-600 hover:text-white rounded-xl font-bold text-xs w-64 transition-all cursor-pointer">
-                     WIPE DATABASE & RESTART
+                     {{ translation.t('wipeDatabase') || 'WIPE DATABASE & RESTART' }}
                    </button>
                 </div>
              </div>
@@ -81,19 +87,19 @@ import { ApiService } from '../../services/api.service';
           <!-- Live Metrics Grid -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-black border border-gray-800 rounded-2xl p-6">
-              <h3 class="text-gray-500 font-bold mb-2">TOTAL REGISTERED</h3>
+              <h3 class="text-gray-500 font-bold mb-2">{{ translation.t('totalRegisteredUpper') || 'TOTAL REGISTERED' }}</h3>
               <p class="text-5xl font-bold text-white">{{stats?.total_voters | number}}</p>
             </div>
             <div class="bg-black border border-gray-800 rounded-2xl p-6">
-              <h3 class="text-gray-500 font-bold mb-2">VOTES CAST</h3>
+              <h3 class="text-gray-500 font-bold mb-2">{{ translation.t('votesCastUpper') || 'VOTES CAST' }}</h3>
               <p class="text-5xl font-bold text-blue-400">{{stats?.total_votes | number}}</p>
             </div>
             <div class="bg-black border border-gray-800 rounded-2xl p-6">
-              <h3 class="text-gray-500 font-bold mb-2">TURNOUT</h3>
+              <h3 class="text-gray-500 font-bold mb-2">{{ translation.t('turnoutUpper') || 'TURNOUT' }}</h3>
               <p class="text-5xl font-bold text-green-400">{{ getPercentage() }}%</p>
             </div>
             <div class="bg-black border border-gray-800 rounded-2xl p-6">
-              <h3 class="text-gray-500 font-bold mb-2">DB VELOCITY ⚡</h3>
+              <h3 class="text-gray-500 font-bold mb-2">{{ translation.t('dbVelocity') || 'DB VELOCITY' }} ⚡</h3>
               <p class="text-5xl font-bold text-yellow-400 flex items-center gap-2">
                 {{stats?.velocity | number}} <span class="text-lg text-gray-600">v/s</span>
               </p>
@@ -102,17 +108,18 @@ import { ApiService } from '../../services/api.service';
 
           <!-- Data Explorer Tabs bg-black border border-gray-800 rounded-2xl -->
           <div class="bg-black border border-gray-800 rounded-2xl overflow-hidden mt-8 shadow-2xl">
-            <div class="flex border-b border-gray-800 bg-gray-900/50">
-               <button (click)="activeTab = 'voters'; loadTabData()" [ngClass]="{'border-b-2 border-red-500 text-white': activeTab === 'voters', 'text-gray-500 hover:text-gray-300': activeTab !== 'voters'}" class="flex-1 py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none">REGISTERED VOTERS</button>
-               <button (click)="activeTab = 'candidates'; loadTabData()" [ngClass]="{'border-b-2 border-red-500 text-white': activeTab === 'candidates', 'text-gray-500 hover:text-gray-300': activeTab !== 'candidates'}" class="flex-1 py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none">CANDIDATES</button>
-               <button (click)="activeTab = 'votes'; loadTabData()" [ngClass]="{'border-b-2 border-red-500 text-white': activeTab === 'votes', 'text-gray-500 hover:text-gray-300': activeTab !== 'votes'}" class="flex-1 py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none flex items-center justify-center gap-2">LIVE AUDIT LOG <span class="animate-pulse w-2 h-2 rounded-full bg-red-500"></span></button>
+             <div class="flex border-b border-gray-800 bg-gray-900/50">
+               <button (click)="activeTab = 'voters'; loadTabData()" [ngClass]="{'border-b-2 border-red-500 text-white': activeTab === 'voters', 'text-gray-500 hover:text-gray-300': activeTab !== 'voters'}" class="flex-1 py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none">{{ translation.t('registeredVoters') }}</button>
+               <button (click)="activeTab = 'candidates'; loadTabData()" [ngClass]="{'border-b-2 border-red-500 text-white': activeTab === 'candidates', 'text-gray-500 hover:text-gray-300': activeTab !== 'candidates'}" class="flex-1 py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none">{{ translation.t('candidates') }}</button>
+               <button (click)="activeTab = 'leaders'; loadTabData()" [ngClass]="{'border-b-2 border-red-500 text-white': activeTab === 'leaders', 'text-gray-500 hover:text-gray-300': activeTab !== 'leaders'}" class="flex-1 py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none">{{ translation.t('electionLeaders') }}</button>
+               <button (click)="activeTab = 'votes'; loadTabData()" [ngClass]="{'border-b-2 border-red-500 text-white': activeTab === 'votes', 'text-gray-500 hover:text-gray-300': activeTab !== 'votes'}" class="flex-1 py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none flex items-center justify-center gap-2">{{ translation.t('liveAuditLog') }} <span class="animate-pulse w-2 h-2 rounded-full bg-red-500"></span></button>
             </div>
             
             <div class="p-0 overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
                <!-- Voters Table -->
                <table *ngIf="activeTab === 'voters'" class="w-full text-left text-sm text-gray-400">
                   <thead class="text-xs text-gray-500 uppercase border-b border-gray-800 sticky top-0 bg-black z-10 shadow-md">
-                     <tr><th class="py-4 px-6">Voter Code</th><th class="py-4 px-6">Full Name</th><th class="py-4 px-6">County</th><th class="py-4 px-6">Constituency</th><th class="py-4 px-6">Registered At</th></tr>
+                     <tr><th class="py-4 px-6">{{ translation.t('voterCodeUpper') || 'VOTER CODE' }}</th><th class="py-4 px-6">{{ translation.t('fullNameUpper') || 'FULL NAME' }}</th><th class="py-4 px-6">{{ translation.t('countyUpper') || 'COUNTY' }}</th><th class="py-4 px-6">{{ translation.t('constituencyUpper') || 'CONSTITUENCY' }}</th><th class="py-4 px-6">{{ translation.t('registeredAtUpper') || 'REGISTERED AT' }}</th></tr>
                   </thead>
                   <tbody>
                      <tr *ngFor="let v of voters" class="border-b border-gray-900 hover:bg-gray-900/50 transition-colors">
@@ -164,7 +171,7 @@ import { ApiService } from '../../services/api.service';
 
                   <table class="w-full text-left text-sm text-gray-400">
                     <thead class="text-xs text-gray-500 uppercase border-b border-gray-800 sticky top-0 bg-black z-10 shadow-md">
-                       <tr><th class="py-4 px-6">Name</th><th class="py-4 px-6">Party</th><th class="py-4 px-6">Seat</th><th class="py-4 px-6">Level</th><th class="py-4 px-6 text-right">Actions</th></tr>
+                       <tr><th class="py-4 px-6">{{ translation.t('fullNameUpper') || 'NAME' }}</th><th class="py-4 px-6">{{ translation.t('party') || 'PARTY' }}</th><th class="py-4 px-6">{{ translation.t('seatName') || 'SEAT' }}</th><th class="py-4 px-6">{{ translation.t('level') || 'LEVEL' }}</th><th class="py-4 px-6 text-right">{{ translation.t('actionUpper') || 'ACTIONS' }}</th></tr>
                     </thead>
                     <tbody>
                        <tr *ngFor="let c of filteredCandidates" class="border-b border-gray-900 hover:bg-gray-900/50 transition-colors group">
@@ -179,10 +186,39 @@ import { ApiService } from '../../services/api.service';
                   </table>
                </div>
 
+               <!-- Leaders Table -->
+               <div *ngIf="activeTab === 'leaders'" class="w-full">
+                  <div class="flex justify-between items-center p-4 bg-gray-900/40 border-b border-gray-800">
+                     <select [(ngModel)]="leaderSeatFilter" class="bg-black border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:border-red-500 outline-none w-64">
+                        <option value="">All Seats</option>
+                        <option value="president">President</option>
+                        <option value="governor">Governor</option>
+                        <option value="senator">Senator</option>
+                        <option value="mp">MP</option>
+                        <option value="woman_rep">Woman Rep</option>
+                        <option value="mca">MCA</option>
+                     </select>
+                  </div>
+                  <table class="w-full text-left text-sm text-gray-400">
+                    <thead class="text-xs text-gray-500 uppercase border-b border-gray-800 sticky top-0 bg-black z-10 shadow-md">
+                       <tr><th class="py-4 px-6">{{ translation.t('seatName') || 'SEAT NAME' }}</th><th class="py-4 px-6">{{ translation.t('candidate') || 'LEADING CANDIDATE' }}</th><th class="py-4 px-6">{{ translation.t('party') || 'PARTY' }}</th><th class="py-4 px-6 text-right">{{ translation.t('totalVotes') || 'TOTAL VOTES' }}</th></tr>
+                    </thead>
+                    <tbody>
+                       <tr *ngFor="let l of filteredLeaders" class="border-b border-gray-900 hover:bg-gray-900/50 transition-colors">
+                          <td class="py-4 px-6 text-blue-400 font-bold tracking-wide uppercase text-xs">{{l.seat_name}}</td>
+                          <td class="py-4 px-6 font-bold text-green-400">{{l.candidate}}</td>
+                          <td class="py-4 px-6">{{l.party}}</td>
+                          <td class="py-4 px-6 text-right font-mono text-white text-lg">{{l.votes | number}}</td>
+                       </tr>
+                       <tr *ngIf="filteredLeaders.length === 0"><td colspan="4" class="py-12 text-center text-gray-500">No leaders to display.</td></tr>
+                    </tbody>
+                  </table>
+               </div>
+
                <!-- Votes Audit Table -->
                <table *ngIf="activeTab === 'votes'" class="w-full text-left text-sm text-gray-400">
                   <thead class="text-xs text-gray-500 uppercase border-b border-gray-800 sticky top-0 bg-black z-10 shadow-md">
-                     <tr><th class="py-4 px-6">Timestamp</th><th class="py-4 px-6">Voter Name/Code</th><th class="py-4 px-6">Seat</th><th class="py-4 px-6">Selected Candidate</th></tr>
+                     <tr><th class="py-4 px-6">{{ translation.t('timestampUpper') || 'TIMESTAMP' }}</th><th class="py-4 px-6">{{ translation.t('voterCodeUpper') || 'VOTER NAME/CODE' }}</th><th class="py-4 px-6">{{ translation.t('seatName') || 'SEAT' }}</th><th class="py-4 px-6">{{ translation.t('candidate') || 'SELECTED CANDIDATE' }}</th></tr>
                   </thead>
                   <tbody>
                      <tr *ngFor="let v of votes" class="border-b border-gray-900 hover:bg-gray-900/50 transition-colors">
@@ -213,13 +249,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   stats: any = null;
   refreshInterval: any;
 
-  activeTab: 'voters' | 'candidates' | 'votes' = 'voters';
+  activeTab: 'voters' | 'candidates' | 'votes' | 'leaders' = 'voters';
   voters: any[] = [];
   candidates: any[] = [];
   votes: any[] = [];
+  leaders: any[] = [];
 
   searchQuery = '';
   seatFilter = '';
+  leaderSeatFilter = '';
   
   newCandidateName = '';
   newCandidateParty = '';
@@ -234,10 +272,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  get filteredLeaders() {
+    return this.leaders.filter(l => {
+      return this.leaderSeatFilter ? l.seat_level === this.leaderSeatFilter || l.seat_name.toLowerCase().includes(this.leaderSeatFilter.toLowerCase()) : true;
+    });
+  }
+
   constructor(
     private api: ApiService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public translation: TranslationService
   ) {}
 
   ngOnInit() {
@@ -282,11 +327,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  logout() {
+  goToDashboard() {
     localStorage.removeItem('uchaguzi_admin_token');
     this.isAuthenticated = false;
     this.token = '';
     if (this.refreshInterval) clearInterval(this.refreshInterval);
+    this.router.navigate(['/']);
   }
 
   goTo(route: string) {
@@ -309,6 +355,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.api.getAdminCandidates(this.token).subscribe(res => { this.candidates = res; this.cdr.detectChanges(); });
     } else if (this.activeTab === 'votes') {
       this.api.getAdminVotes(this.token).subscribe(res => { this.votes = res; this.cdr.detectChanges(); });
+    } else if (this.activeTab === 'leaders') {
+      this.api.getAdminLeaders(this.token).subscribe(res => { this.leaders = res; this.cdr.detectChanges(); });
     }
   }
 
@@ -320,7 +368,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: () => {
-        this.logout(); // Kicked out
+        this.goToDashboard(); // Kicked out
       }
     });
   }
@@ -367,3 +415,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
      });
   }
 }
+
+// trigger recompile
+
+// force recompile

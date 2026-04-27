@@ -1,0 +1,52 @@
+<div class="help-assistant-container">
+  <!-- Chat Window -->
+  <div class="chat-window" [class.open]="isOpen">
+    <div class="chat-header">
+      <div class="chat-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bot-icon"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+        Uchaguzi Guide
+      </div>
+      <button class="close-btn" (click)="toggleChat()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="chat-messages">
+      <div *ngFor="let msg of messages" class="message-bubble" [ngClass]="msg.sender">
+        {{ msg.text }}
+      </div>
+      
+      <!-- Typing Indicator -->
+      <div *ngIf="isTyping" class="message-bubble bot typing-indicator">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="quick-replies mb-3">
+        <button *ngFor="let reply of quickReplies" class="quick-reply-btn" (click)="handleReplyClick(reply)">
+          {{ reply.label }}
+        </button>
+      </div>
+      
+      <div class="input-wrapper">
+        <input type="text" 
+               [(ngModel)]="userInput" 
+               (keyup.enter)="sendMessage()" 
+               placeholder="Type your question..." 
+               class="chat-input">
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput.trim()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <button class="fab" (click)="toggleChat()" [class.active]="isOpen">
+    <svg *ngIf="!isOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3l-3 3z"/></svg>
+    <svg *ngIf="isOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  </button>
+</div>

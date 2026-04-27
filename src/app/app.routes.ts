@@ -6,6 +6,7 @@ import { DashboardComponent } from './components/dashboard/dashboard';
 import { Voting } from './components/voting/voting';
 import { ResultsComponent } from './components/results/results';
 import { AdminDashboardComponent } from './components/admin/admin';
+import { AnalyticsComponent } from './components/analytics/analytics';
 import { AuthGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
@@ -25,6 +26,11 @@ export const routes: Routes = [
   { 
     path: 'results', 
     component: ResultsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'analytics',
+    component: AnalyticsComponent,
     canActivate: [AuthGuard]
   },
   {

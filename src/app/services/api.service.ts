@@ -162,4 +162,9 @@ export class ApiService {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
     return this.http.post<any>(`${this.baseUrl}/system-admin/restart-voting`, {}, { headers });
   }
+
+  getAdminLeaders(token: string): Observable<any[]> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.get<any[]>(`${this.baseUrl}/results/leaders`, { headers });
+  }
 }
