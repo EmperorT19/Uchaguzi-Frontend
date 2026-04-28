@@ -1,14 +1,23 @@
 [build]
-  command   = "npm run build && sed -i 's|NETLIFY_API_URL|'\"$API_URL\"'|g' dist/voting/browser/index.html"
+  command   = "npm run build"
   publish   = "dist/voting/browser"
 
 [build.environment]
   NODE_VERSION = "20"
 
-# ─── Set this in Netlify dashboard → Site settings → Environment Variables ───
-# API_URL = https://your-railway-backend.up.railway.app
+# ─── API Proxy ────────────────────────────────────────────────────────────────
+# All /api/* requests are proxied to the Railway backend.
+# This eliminates CORS entirely — browser only talks to Netlify.
+# Set API_URL in Netlify dashboard → Environment Variables
+# e.g. https://web-production-a0d8df.up.railway.app
 
-# SPA fallback — all routes serve index.html so Angular Router works
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://web-production-a0d8df.up.railway.app/:splat"
+  status = 200
+  force  = true
+
+# SPA fallback — all other routes serve index.html so Angular Router works
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
