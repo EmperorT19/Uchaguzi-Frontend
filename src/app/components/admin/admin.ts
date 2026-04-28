@@ -117,21 +117,34 @@ import { ApiService } from '../../services/api.service';
             
             <div class="p-0 overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
                <!-- Voters Table -->
-               <table *ngIf="activeTab === 'voters'" class="w-full text-left text-sm text-gray-400">
-                  <thead class="text-xs text-gray-500 uppercase border-b border-gray-800 sticky top-0 bg-black z-10 shadow-md">
-                     <tr><th class="py-4 px-6">{{ translation.t('voterCodeUpper') || 'VOTER CODE' }}</th><th class="py-4 px-6">{{ translation.t('fullNameUpper') || 'FULL NAME' }}</th><th class="py-4 px-6">{{ translation.t('countyUpper') || 'COUNTY' }}</th><th class="py-4 px-6">{{ translation.t('constituencyUpper') || 'CONSTITUENCY' }}</th><th class="py-4 px-6">{{ translation.t('registeredAtUpper') || 'REGISTERED AT' }}</th></tr>
-                  </thead>
-                  <tbody>
-                     <tr *ngFor="let v of voters" class="border-b border-gray-900 hover:bg-gray-900/50 transition-colors">
-                        <td class="py-4 px-6 font-mono text-white">{{v.voter_code}}</td>
-                        <td class="py-4 px-6 font-semibold">{{v.full_name}}</td>
-                        <td class="py-4 px-6">{{v.county}}</td>
-                        <td class="py-4 px-6">{{v.constituency}}</td>
-                        <td class="py-4 px-6 text-gray-500">{{v.created_at | date:'medium'}}</td>
-                     </tr>
-                     <tr *ngIf="voters.length === 0"><td colspan="5" class="py-12 text-center text-gray-500">No records found.</td></tr>
-                  </tbody>
-               </table>
+               <div *ngIf="activeTab === 'voters'" class="w-full">
+                  <div class="flex justify-between items-center p-4 bg-gray-900/40 border-b border-gray-800">
+                     <div></div>
+                     <button (click)="deleteAllVoters()" class="bg-red-900 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">DELETE ALL VOTERS</button>
+                  </div>
+                  <table class="w-full text-left text-sm text-gray-400">
+                     <thead class="text-xs text-gray-500 uppercase border-b border-gray-800 sticky top-0 bg-black z-10 shadow-md">
+                        <tr><th class="py-4 px-6">{{ translation.t('voterCodeUpper') || 'VOTER CODE' }}</th><th class="py-4 px-6">{{ translation.t('fullNameUpper') || 'FULL NAME' }}</th><th class="py-4 px-6">PASSWORD HASH</th><th class="py-4 px-6">{{ translation.t('countyUpper') || 'COUNTY' }}</th><th class="py-4 px-6">{{ translation.t('constituencyUpper') || 'CONSTITUENCY' }}</th><th class="py-4 px-6">{{ translation.t('registeredAtUpper') || 'REGISTERED AT' }}</th><th class="py-4 px-6 text-right">{{ translation.t('actionUpper') || 'ACTIONS' }}</th></tr>
+                     </thead>
+                     <tbody>
+                        <tr *ngFor="let v of voters" class="border-b border-gray-900 hover:bg-gray-900/50 transition-colors group">
+                           <td class="py-4 px-6 font-mono text-white">{{v.voter_code}}</td>
+                           <td class="py-4 px-6 font-semibold">{{v.full_name}}</td>
+                           <td class="py-4 px-6 font-mono text-xs text-gray-500 max-w-[150px] truncate" [title]="v.password_hash">{{v.password_hash}}</td>
+                           <td class="py-4 px-6">{{v.county}}</td>
+                           <td class="py-4 px-6">{{v.constituency}}</td>
+                           <td class="py-4 px-6 text-gray-500">{{v.created_at | date:'medium'}}</td>
+                           <td class="py-4 px-6 text-right">
+                              <div class="flex justify-end gap-2">
+                                 <button (click)="resetVoterPassword(v.id)" class="bg-blue-900/30 hover:bg-blue-900 text-blue-500 hover:text-white px-3 py-1 rounded transition-colors font-bold text-xs uppercase cursor-pointer">RESET PW</button>
+                                 <button (click)="deleteVoter(v.id)" class="bg-red-900/30 hover:bg-red-900 text-red-500 hover:text-white px-3 py-1 rounded transition-colors font-bold text-xs uppercase cursor-pointer">DELETE</button>
+                              </div>
+                           </td>
+                        </tr>
+                        <tr *ngIf="voters.length === 0"><td colspan="7" class="py-12 text-center text-gray-500">No records found.</td></tr>
+                     </tbody>
+                  </table>
+               </div>
 
                <!-- Candidates Table -->
                <div *ngIf="activeTab === 'candidates'" class="w-full">
@@ -148,7 +161,10 @@ import { ApiService } from '../../services/api.service';
                            <option value="mca">MCA</option>
                         </select>
                      </div>
-                     <button (click)="isAddingCandidate = !isAddingCandidate" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">+ NEW CANDIDATE</button>
+                     <div class="flex gap-2">
+                        <button (click)="deleteAllCandidates()" class="bg-red-900 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">DELETE ALL CANDIDATES</button>
+                        <button (click)="isAddingCandidate = !isAddingCandidate" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">+ NEW CANDIDATE</button>
+                     </div>
                   </div>
 
                   <!-- Add Candidate Modal Inline -->
@@ -179,7 +195,7 @@ import { ApiService } from '../../services/api.service';
                           <td class="py-4 px-6">{{c.party}}</td>
                           <td class="py-4 px-6 text-green-400 font-semibold">{{c.seat_name}}</td>
                           <td class="py-4 px-6 uppercase text-gray-500">{{c.seat_level}}</td>
-                          <td class="py-4 px-6 text-right"><button (click)="deleteCandidate(c.id)" class="text-red-900 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 font-bold text-xs uppercase cursor-pointer relative z-20">DELETE</button></td>
+                          <td class="py-4 px-6 text-right"><button (click)="deleteCandidate(c.id)" class="bg-red-900/30 hover:bg-red-900 text-red-500 hover:text-white px-3 py-1 rounded transition-colors font-bold text-xs uppercase cursor-pointer">DELETE</button></td>
                        </tr>
                        <tr *ngIf="filteredCandidates.length === 0"><td colspan="5" class="py-12 text-center text-gray-500">No records found.</td></tr>
                     </tbody>
@@ -414,6 +430,42 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.newCandidateParty = '';
           this.loadTabData();
      });
+  }
+
+  deleteAllCandidates() {
+     if(confirm("🚨 CRITICAL WARNING 🚨\n\nAre you sure you want to DELETE ALL CANDIDATES and their associated votes? This cannot be undone.")) {
+         this.api.deleteAllAdminCandidates(this.token).subscribe(() => {
+             this.loadTabData();
+             this.loadStats();
+         });
+     }
+  }
+
+  resetVoterPassword(id: number) {
+     if(confirm("Are you sure you want to reset this voter's password to 'IEBC2026!'?")) {
+         this.api.resetAdminVoterPassword(this.token, id).subscribe(res => {
+             alert(res.message);
+             this.loadTabData();
+         });
+     }
+  }
+
+  deleteVoter(id: number) {
+     if(confirm("DANGER: Delete this voter and ALL votes associated with them?")) {
+         this.api.deleteAdminVoter(this.token, id).subscribe(() => {
+             this.loadTabData();
+             this.loadStats();
+         });
+     }
+  }
+
+  deleteAllVoters() {
+     if(confirm("🚨 CRITICAL WARNING 🚨\n\nAre you sure you want to DELETE ALL VOTERS and their associated votes? This cannot be undone.")) {
+         this.api.deleteAllAdminVoters(this.token).subscribe(() => {
+             this.loadTabData();
+             this.loadStats();
+         });
+     }
   }
 }
 

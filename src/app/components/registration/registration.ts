@@ -5303,6 +5303,7 @@ export class RegistrationComponent implements OnInit {
         const errData = err.error;
         if (errData?.message) this.serverError = errData.message;
         else if (errData?.id_number) this.errors.idNumber = errData.id_number[0];
+        else if (errData?.phone) this.errors.phone = errData.phone[0];
         else this.serverError = errData?.error || errData?.detail || 'Registration failed. Please try again.';
         this.cdr.detectChanges();
       }
