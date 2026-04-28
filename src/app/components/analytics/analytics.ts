@@ -111,7 +111,10 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   fetchAllCandidates() {
-    let url = 'http://127.0.0.1:8000/results/all_candidates?';
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://127.0.0.1:8000' 
+      : 'https://web-production-a0d6df.up.railway.app';
+    let url = `${baseUrl}/results/all_candidates?`;
     if (this.selectedConstituency) {
       url += `constituency=${this.selectedConstituency}`;
     } else if (this.selectedCounty) {

@@ -70,7 +70,11 @@ export class HelpAssistantComponent {
     this.scrollToBottom();
 
     // Call the intelligent backend endpoint
-    this.http.post<any>('http://127.0.0.1:8000/chat', { message: messageText }).subscribe({
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://127.0.0.1:8000' 
+      : 'https://web-production-a0d6df.up.railway.app';
+    
+    this.http.post<any>(`${baseUrl}/chat`, { message: messageText }).subscribe({
       next: (res) => {
         // Small delay to simulate typing realistically
         setTimeout(() => {
