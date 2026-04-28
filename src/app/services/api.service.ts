@@ -6,10 +6,11 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  // Production: Netlify proxies /api/* to Railway (no CORS needed)
-  // Local dev: falls back to localhost
-  private baseUrl = (window as any).__env?.API_URL
-    || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? '/api' : 'http://127.0.0.1:8000');
+  // Production: direct call to Railway backend
+  // CORS_ALLOW_ALL_ORIGINS=True on backend allows this
+  private baseUrl = window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:8000'
+    : 'https://web-production-a0d6df.up.railway.app';
 
   constructor(private http: HttpClient) {}
 
