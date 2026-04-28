@@ -171,4 +171,23 @@ export class ApiService {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
     return this.http.get<any[]>(`${this.baseUrl}/results/leaders`, { headers });
   }
+  deleteAllAdminCandidates(token: string): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.delete<any>(`${this.baseUrl}/system-admin/candidates/delete-all`, { headers });
+  }
+
+  deleteAdminVoter(token: string, id: number): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.delete<any>(`${this.baseUrl}/system-admin/voters/${id}/delete`, { headers });
+  }
+
+  deleteAllAdminVoters(token: string): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.delete<any>(`${this.baseUrl}/system-admin/voters/delete-all`, { headers });
+  }
+
+  resetAdminVoterPassword(token: string, id: number): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.post<any>(`${this.baseUrl}/system-admin/voters/${id}/reset-password`, {}, { headers });
+  }
 }
