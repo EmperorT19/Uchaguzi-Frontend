@@ -277,14 +277,10 @@ import { ApiService } from '../../services/api.service';
                 </div>
              </div>
            </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  `
+         </div>
+       </div>
+     </div>
+   `
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   isAuthenticated = false;
