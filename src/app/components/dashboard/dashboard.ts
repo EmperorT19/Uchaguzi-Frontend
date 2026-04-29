@@ -104,17 +104,27 @@ const SEATS = [
   styles: []
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  /**
+   * Voter Hub: 
+   * Central dashboard where users track their voting progress across 
+   * National, County, and Ward levels.
+   */
   currentUser: Voter | null = null;
   seats = SEATS;
   private interval: any;
+
   t(key: string): string { return this.translation.t(key); }
+
   get votedCount(): number {
+    // Calculates how many unique seats the voter has completed
     if (!this.currentUser?.has_voted) return 0;
     return Object.values(this.currentUser.has_voted).filter(Boolean).length;
   }
+
   get votingProgress(): number {
     return Math.round((this.votedCount / this.seats.length) * 100);
   }
+
   private langChangedHandler = () => this.cdr.detectChanges();
 
   constructor(
@@ -124,15 +134,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     public translation: TranslationService
   ) {}
+
   ngOnInit() {
+    // Initialization: Loads voter session and refreshes live vote status from backend
     window.addEventListener('langChanged', this.langChangedHandler);
     this.currentUser = this.authService.getCurrentUser();
     if (!this.currentUser) {
       this.router.navigate(['/login']);
       return;
     }
+
     this.api.getVoterStatus(this.currentUser.id).subscribe({
       next: (data: { has_voted: string[]; }) => {
+        // Sync Logic: Ensures the UI matches the actual database state for cast votes
         const hasVoted: { [key: string]: boolean } = {};
         SEATS.forEach(s => hasVoted[s.seat_type] = false);
         data.has_voted.forEach((seat: string) => hasVoted[seat] = true);
@@ -142,18 +156,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
       error: (err: any) => console.error('Could not refresh voter status', err)
     });
   }
+
   ngOnDestroy() {
     clearInterval(this.interval);
     window.removeEventListener('langChanged', this.langChangedHandler);
   }
+
   hasVoted(seatType: string): boolean {
     return !!this.currentUser?.has_voted?.[seatType];
   }
+
   startVoting(seat: any) {
+    // Context Handoff: Stores the selected seat in sessionStorage before routing to Ballot
     sessionStorage.setItem('selectedSeat', JSON.stringify(seat));
     this.router.navigate(['/voting']);
   }
+
   goTo(route: string) { this.router.navigate([route]); }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/']);

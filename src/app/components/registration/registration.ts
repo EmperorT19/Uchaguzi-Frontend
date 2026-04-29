@@ -2902,6 +2902,12 @@ import { ApiService } from '../../services/api.service';
   `]
 })
 export class RegistrationComponent implements OnInit {
+  /**
+   * Voter Registration: 
+   * Manages the signup lifecycle, including data validation, 
+   * regional cascading (County -> Constituency -> Ward), 
+   * and secure voter code generation.
+   */
   form = {
     fullName: '',
     idNumber: '',

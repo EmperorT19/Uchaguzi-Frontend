@@ -111,6 +111,11 @@ const I18N: any = {
   providedIn: "root"
 })
 export class TranslationService {
+  /**
+   * Localization Engine: 
+   * Manages English (EN) and Swahili (SW) language states.
+   * Persists user choice in localStorage and triggers global UI updates via CustomEvents.
+   */
   currentLang: "en" | "sw" = "en";
   /** Increments every time the language changes — bind this in templates to force re-render */
   langTick = 0;

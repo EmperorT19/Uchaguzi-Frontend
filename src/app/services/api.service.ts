@@ -8,6 +8,8 @@ import { Observable } from 'rxjs';
 export class ApiService {
   // Production: direct call to Railway backend
   // CORS_ALLOW_ALL_ORIGINS=True on backend allows this
+  // Dynamic Base URL: Switches between Local Dev (127.0.0.1) and Production (Railway)
+  // based on the browser's hostname. Ensure this matches your Railway deployment URL.
   private baseUrl = window.location.hostname === 'localhost'
     ? 'http://127.0.0.1:8000'
     : 'https://web-production-a0d6df.up.railway.app';

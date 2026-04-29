@@ -131,6 +131,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.http.get<any>(url).subscribe(data => {
       this.allCandidatesData = data;
       this.renderOverviewChart();
+      // Sync Logic: Automatically redraws any expanded seat charts when new data arrives
       this.refreshAllVisibleCharts();
       this.cdr.detectChanges();
     });

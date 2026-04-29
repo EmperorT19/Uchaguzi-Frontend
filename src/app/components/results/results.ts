@@ -312,6 +312,7 @@ export class ResultsComponent implements OnInit, OnDestroy {
   ngOnInit() {
     window.addEventListener('langChanged', this.langChangedHandler);
     this.loadResults();
+    // Live Polling: Refreshes the board every 2 seconds for real-time election monitoring
     this.refreshInterval = setInterval(() => this.loadResults(), 2000);
   }
 
@@ -396,6 +397,11 @@ export class ResultsComponent implements OnInit, OnDestroy {
   }
 
   getLocalizedSeatNameFull(seat: any): string {
+    /* 
+      Regional Name Translator: 
+      Converts backend seat names into polished, localized strings.
+      Example: 'Governor for Mombasa County' -> 'Mombasa Kaunti Gavana' (SW)
+    */
     const role = this.getSeatName(seat.seat_type);
     const rawName = seat.seat_name || '';
 
