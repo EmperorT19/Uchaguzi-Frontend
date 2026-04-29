@@ -333,6 +333,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   login() {
+    /* 
+      Admin Authentication: 
+      Uses the master IEBC access key to grant root privileges.
+      Token is stored in localStorage for session persistence.
+    */
     if (!this.adminKey.trim()) return;
     this.loading = true;
     this.errorMsg = '';
@@ -481,6 +486,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
      }
   }
   forceLoadCandidates() {
+    /* 
+      Bulk Seeding (CRITICAL): 
+      Calls the backend load_candidates command to populate ~15,000 candidates from CSV.
+      This is required to synchronize the production DB with the Kenyan regional mapping.
+    */
     if(!confirm("Attempting to load ~15,000 candidates from server-side CSV. This may take 30-60 seconds. Proceed?")) return;
     this.loading = true;
     this.api.forceLoadCandidates(this.token, "IEBC2026").subscribe({

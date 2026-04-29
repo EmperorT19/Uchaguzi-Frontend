@@ -515,6 +515,11 @@ import { TranslationService } from '../../services/translation.service';
   styles: []
 })
 export class Voting implements OnInit, OnDestroy {
+  /**
+   * Ballot Interface: 
+   * Manages candidate selection, AI-powered summaries, and secure vote submission.
+   * Filters candidates based on the logged-in voter's specific regional data.
+   */
   currentUser: Voter | null = null;
   activeSeat: string | null = null;
   activeSeatId: number | null = null;
@@ -535,6 +540,7 @@ export class Voting implements OnInit, OnDestroy {
   }
 
   get filteredCandidates() {
+    // Live Search: Allows voters to quickly find candidates by name or party
     if (!this.searchTerm) return this.candidates;
     const term = this.searchTerm.toLowerCase();
     return this.candidates.filter(c => 
@@ -564,6 +570,7 @@ export class Voting implements OnInit, OnDestroy {
       return;
     }
 
+    // Direct Entry: If a user clicked 'Vote' on a specific seat in the dashboard
     const stored = sessionStorage.getItem('selectedSeat');
     if (stored) {
       sessionStorage.removeItem('selectedSeat');
@@ -573,11 +580,11 @@ export class Voting implements OnInit, OnDestroy {
   }
 
   selectSeat(seatType: string) {
-    console.log('USER:', this.currentUser);
-    console.log('COUNTY:', this.currentUser?.county);
-    console.log('CONSTITUENCY:', this.currentUser?.constituency);
-    console.log('WARD:', this.currentUser?.ward);
-
+    /**
+     * Regional Candidate Fetch:
+     * Critical Sync point. Sends user's County/Constituency/Ward IDs to the backend
+     * to fetch only the candidates relevant to their physical location.
+     */
     this.activeSeat = seatType;
     this.activeSeatId = null;
     this.selectedCandidate = null;
@@ -594,7 +601,6 @@ export class Voting implements OnInit, OnDestroy {
     }).subscribe({
       next: (data) => {
         this.loading = false;
-        console.log('CANDIDATES RESPONSE:', data);
         const seat = data.find((s: any) => s.seat_type === seatType && s.candidates.length > 0);
         this.activeSeatId = seat?.seat_id ?? null;
         this.candidates = seat ? seat.candidates.map((c: any) => ({
@@ -616,6 +622,7 @@ export class Voting implements OnInit, OnDestroy {
   }
 
   summarizeCandidate(id: number) {
+    // AI Integration: Requests a dynamic, 2-sentence summary of the candidate's platform
     this.loadingSummaries[id] = true;
     this.api.summarizeCandidate(id).subscribe({
       next: (res) => {
@@ -633,6 +640,11 @@ export class Voting implements OnInit, OnDestroy {
   }
 
   confirmVote() {
+    /**
+     * Secure Submission: 
+     * Transmits the ballot to the backend for audit trail recording.
+     * Prevents double-voting via backend constraints and frontend state updates.
+     */
     if (!this.selectedCandidate || !this.currentUser || !this.activeSeat || !this.activeSeatId) return;
 
     this.showConfirm = false;
