@@ -160,10 +160,11 @@ import { ApiService } from '../../services/api.service';
                            <option value="mca">MCA</option>
                         </select>
                      </div>
-                     <div class="flex gap-2 w-full sm:w-auto">
+                      <div class="flex gap-2 w-full sm:w-auto">
+                        <button *ngIf="candidates.length === 0" (click)="forceLoadCandidates()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors animate-bounce">FORCE LOAD CANDIDATES</button>
                         <button (click)="deleteAllCandidates()" class="flex-1 bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">DELETE ALL</button>
                         <button (click)="isAddingCandidate = !isAddingCandidate" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">+ NEW</button>
-                     </div>
+                      </div>
                   </div>
 
                   <!-- Add Candidate Modal Inline -->
@@ -196,7 +197,13 @@ import { ApiService } from '../../services/api.service';
                           <td class="py-4 px-6 uppercase" style="color: var(--text-secondary)">{{c.seat_level}}</td>
                           <td class="py-4 px-6 text-right"><button (click)="deleteCandidate(c.id)" class="bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white px-3 py-1 rounded border border-red-600/30 transition-colors font-bold text-xs uppercase cursor-pointer">DELETE</button></td>
                        </tr>
-                       <tr *ngIf="filteredCandidates.length === 0"><td colspan="5" class="py-12 text-center" style="color: var(--text-secondary)">No records found.</td></tr>
+                        <tr *ngIf="filteredCandidates.length === 0">
+                           <td colspan="5" class="py-20 text-center" style="color: var(--text-secondary)">
+                              <div class="text-4xl mb-2">🤷‍♂️</div>
+                              <p class="font-bold">No candidates found.</p>
+                              <button (click)="forceLoadCandidates()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">CLICK TO SEED DATABASE</button>
+                           </td>
+                        </tr>
                     </tbody>
                   </table>
                </div>
@@ -220,9 +227,14 @@ import { ApiService } from '../../services/api.service';
                     </thead>
                     <tbody style="color: var(--text-primary)">
                        <tr *ngFor="let l of filteredLeaders" class="border-b hover:bg-black/5 transition-colors" style="border-color: var(--border-color)">
-                          <td class="py-4 px-6 text-blue-600 font-bold tracking-wide uppercase text-xs">{{l.seat_name}}</td>
-                          <td class="py-4 px-6 font-bold text-green-600">{{l.candidate}}</td>
-                          <td class="py-4 px-6">{{l.party}}</td>
+                          <td class="py-4 px-6 text-blue-600 font-bold tracking-wide uppercase text-xs">
+                             {{l.seat_name}}
+                             <span *ngIf="l.level !== 'National'" class="block text-[10px] text-gray-500 mt-1">
+                               {{ l.level }} Level
+                             </span>
+                          </td>
+                          <td class="py-4 px-6 font-bold text-green-600">{{l.leader_name}}</td>
+                          <td class="py-4 px-6 font-semibold" style="color: var(--text-secondary)">{{l.leader_party}}</td>
                           <td class="py-4 px-6 text-right font-mono text-lg font-bold">{{l.votes | number}}</td>
                        </tr>
                        <tr *ngIf="filteredLeaders.length === 0"><td colspan="4" class="py-12 text-center" style="color: var(--text-secondary)">No leaders to display.</td></tr>
@@ -467,6 +479,23 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
              this.loadStats();
          });
      }
+  }
+  forceLoadCandidates() {
+    if(!confirm("Attempting to load ~15,000 candidates from server-side CSV. This may take 30-60 seconds. Proceed?")) return;
+    this.loading = true;
+    this.api.forceLoadCandidates(this.token, "IEBC2026").subscribe({
+        next: (res) => {
+            alert(`SUCCESS: ${res.stdout || 'Data loaded.'}`);
+            this.loading = false;
+            this.loadTabData();
+            this.loadStats();
+        },
+        error: (err) => {
+            alert(`FAILED: ${err.error?.error || 'Unknown error'}`);
+            this.loading = false;
+            this.cdr.detectChanges();
+        }
+    });
   }
 }
 

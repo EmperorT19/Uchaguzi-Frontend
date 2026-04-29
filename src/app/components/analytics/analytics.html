@@ -103,7 +103,7 @@
         </div>
         
         <!-- Dropdown Chart -->
-        <details class="mt-4 border rounded-lg overflow-hidden transition-colors" style="border-color: var(--border-color)">
+        <details [id]="'details-' + seat" class="mt-4 border rounded-lg overflow-hidden transition-colors" style="border-color: var(--border-color)">
           <summary class="p-4 font-bold cursor-pointer hover:bg-black/5" style="background: var(--bg-primary)" (click)="renderSeatChart(seat)">
              📊 {{ translation.t('view') || 'View' }} {{ t('seat_' + seat) }} {{ translation.t('barChart') || 'Bar Chart' }}
           </summary>

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
@@ -46,7 +46,12 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   overviewChartInstance: any;
   seatChartInstances: { [key: string]: any } = {};
   
-  constructor(private http: HttpClient, private router: Router, public translation: TranslationService) {}
+  constructor(
+    private http: HttpClient, 
+    private router: Router, 
+    public translation: TranslationService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   private langChangedHandler = () => {
     this.renderOverviewChart();
@@ -126,6 +131,17 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     this.http.get<any>(url).subscribe(data => {
       this.allCandidatesData = data;
       this.renderOverviewChart();
+      this.refreshAllVisibleCharts();
+      this.cdr.detectChanges();
+    });
+  }
+
+  refreshAllVisibleCharts() {
+    this.seatTypes.forEach(seat => {
+      const details = document.querySelector(`details#details-${seat}`) as any;
+      if (details && details.open) {
+        this.renderSeatChart(seat);
+      }
     });
   }
 

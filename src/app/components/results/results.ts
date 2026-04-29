@@ -245,7 +245,7 @@ const SEAT_META: { [key: string]: { name: string; icon: string } } = {
                      class="rounded-lg p-4 relative overflow-hidden transition-all duration-[800ms] ease-out border shadow-sm"
                      style="background: var(--bg-primary); border-color: var(--border-color)"
                      [ngStyle]="i === 0 && seat.total_votes > 0 ? {'border-color': 'var(--accent-color)', 'box-shadow': '0 4px 20px rgba(16, 185, 129, 0.15)', 'transform': 'scale(1.02)'} : {}">
-                  <div *ngIf="i === 0 && seat.total_votes > 0"
+                  <div *ngIf="isLeading(c, seat) && seat.total_votes > 0"
                        class="absolute top-0 right-0 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-lg"
                        style="background: var(--accent-color)">
                     {{t('leading')}}
@@ -253,7 +253,7 @@ const SEAT_META: { [key: string]: { name: string; icon: string } } = {
                   <div class="flex justify-between items-center mb-2">
                     <div>
                       <h3 class="text-xl font-bold" style="color: var(--text-primary)">{{ c.full_name }}</h3>
-                      <p class="text-sm" style="color: var(--text-secondary)">{{ c.party }}</p>
+                      <p class="text-xs font-black uppercase tracking-widest mt-1" style="color: var(--accent-color)">{{ c.party }}</p>
                     </div>
                     <div class="text-right">
                       <p class="text-2xl font-bold text-green-400 flex items-center justify-end gap-2">
@@ -271,6 +271,9 @@ const SEAT_META: { [key: string]: { name: string; icon: string } } = {
                   <div class="w-full bg-gray-700 rounded-full h-3">
                     <div class="bg-gradient-to-r from-red-600 to-green-600 h-3 rounded-full transition-all duration-500"
                          [style.width.%]="getPercentage(c.votes, seat.total_votes)"></div>
+                  </div>
+                  <div *ngIf="isLeading(c, seat) && seat.total_votes > 0" class="mt-2 text-xs font-bold animate-pulse" style="color: var(--accent-color)">
+                    🏆 {{ translation.currentLang === 'en' ? 'Currently Leading' : 'Anaongoza kwa sasa' }}
                   </div>
                 </div>
               </div>
@@ -374,6 +377,12 @@ export class ResultsComponent implements OnInit, OnDestroy {
     });
   }
 
+  isLeading(candidate: any, seat: any): boolean {
+    if (!seat.sorted_results || seat.sorted_results.length === 0) return false;
+    const maxVotes = seat.sorted_results[0].votes;
+    return candidate.votes === maxVotes && maxVotes > 0;
+  }
+
   getPercentage(votes: number, total: number): number {
     return total > 0 ? Math.round((votes / total) * 1000) / 10 : 0;
   }
@@ -395,22 +404,12 @@ export class ResultsComponent implements OnInit, OnDestroy {
         return 'President of the Republic of Kenya';
       }
       
-      if (rawName.includes(' for ') && rawName.includes(' County')) {
-        const region = rawName.substring(rawName.indexOf(' for ') + 5, rawName.indexOf(' County'));
-        return `${role} for ${region} County`;
+      if (rawName.includes(' for ')) {
+         const region = rawName.substring(rawName.indexOf(' for ') + 5);
+         return `${role} for ${region}`;
       }
       
-      if (rawName.startsWith('MP - ')) {
-        const region = rawName.replace('MP - ', '');
-        return `${role} for ${region} Constituency`;
-      }
-      
-      if (rawName.startsWith('MCA - ')) {
-        const region = rawName.replace('MCA - ', '');
-        return `${role} for ${region} Ward`;
-      }
-      
-      return `${role} — ${rawName}`;
+      return rawName || role;
     }
 
     // Swahili formatting overrides
@@ -418,22 +417,25 @@ export class ResultsComponent implements OnInit, OnDestroy {
       return `${role} wa Jamhuri ya Kenya`;
     }
 
-    if (rawName.includes(' for ') && rawName.includes(' County')) {
-      const region = rawName.substring(rawName.indexOf(' for ') + 5, rawName.indexOf(' County'));
-      return `${role} wa Kaunti ya ${region}`;
+    if (rawName.includes(' for ')) {
+      let region = rawName.substring(rawName.indexOf(' for ') + 5);
+      
+      if (region.includes(' County')) {
+          region = region.replace(' County', '');
+          return `${role} wa Kaunti ya ${region}`;
+      }
+      if (region.includes(' Constituency')) {
+          region = region.replace(' Constituency', '');
+          return `${role} wa Eneo Bunge la ${region}`;
+      }
+      if (region.includes(' Ward')) {
+          region = region.replace(' Ward', '');
+          return `${role} wa Wodi ya ${region}`;
+      }
+      return `${role} wa ${region}`;
     }
 
-    if (rawName.startsWith('MP - ')) {
-      const region = rawName.replace('MP - ', '');
-      return `${role} wa Eneo Bunge la ${region}`;
-    }
-
-    if (rawName.startsWith('MCA - ')) {
-      const region = rawName.replace('MCA - ', '');
-      return `${role} wa Wodi ya ${region}`;
-    }
-
-    return `${role} — ${rawName}`;
+    return rawName || role;
   }
 
   goTo(route: string) { this.router.navigate([route]); }
