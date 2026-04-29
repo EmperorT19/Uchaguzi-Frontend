@@ -191,8 +191,8 @@ export class ApiService {
     return this.http.post<any>(`${this.baseUrl}/system-admin/voters/${id}/reset-password`, {}, { headers });
   }
 
-  forceLoadCandidates(token: string, secretKey: string): Observable<any> {
+  forceLoadCandidates(token: string, adminKey: string): Observable<any> {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
-    return this.http.post<any>(`${this.baseUrl}/candidate/load-csv`, { secret_key: secretKey }, { headers });
+    return this.http.post<any>(`${this.baseUrl}/system-admin/candidates/force-load`, { admin_key: adminKey }, { headers });
   }
 }
