@@ -49,8 +49,10 @@
     </section>
 
     <!-- Comprehensive Candidate Tables -->
-    <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)" *ngFor="let seat of seatTypes">
-      <ng-container *ngIf="allCandidatesData[seat] && allCandidatesData[seat].length > 0">
+    <ng-container *ngFor="let seat of seatTypes">
+      <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" 
+               style="background: var(--bg-card); border-color: var(--border-color)" 
+               *ngIf="allCandidatesData[seat] && allCandidatesData[seat].length > 0">
         <h2 class="text-2xl font-bold mb-4 uppercase">{{ t('seat_' + seat) }} {{ translation.t('results') || 'Results' }}</h2>
         <div class="overflow-x-auto mb-4">
           <table class="w-full text-left border-collapse">
@@ -84,8 +86,8 @@
              </div>
           </div>
         </details>
-      </ng-container>
-    </section>
+      </section>
+    </ng-container>
     
     <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)" *ngIf="(allCandidatesData | keyvalue)?.length === 0">
       <div class="text-center p-8 text-gray-500">

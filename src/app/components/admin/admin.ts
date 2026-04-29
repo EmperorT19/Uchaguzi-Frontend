@@ -241,24 +241,35 @@ import { ApiService } from '../../services/api.service';
                     </tbody>
                   </table>
                </div>
-
                <!-- Votes Audit Table -->
                <div *ngIf="activeTab === 'votes'" class="w-full">
-               <table class="w-full text-left text-sm">
-                  <thead class="text-xs uppercase border-b sticky top-0 z-10 shadow-sm" style="background: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary)">
-                     <tr><th class="py-4 px-6">{{ translation.t('timestampUpper') || 'TIMESTAMP' }}</th><th class="py-4 px-6">{{ translation.t('voterCodeUpper') || 'VOTER NAME/CODE' }}</th><th class="py-4 px-6">{{ translation.t('seatName') || 'SEAT' }}</th><th class="py-4 px-6">{{ translation.t('candidate') || 'SELECTED CANDIDATE' }}</th></tr>
-                  </thead>
-                  <tbody style="color: var(--text-primary)">
-                     <tr *ngFor="let v of votes" class="border-b hover:bg-black/5 transition-colors" style="border-color: var(--border-color)">
-                        <td class="py-4 px-6 text-xs font-mono" style="color: var(--text-secondary)">{{v.time | date:'mediumTime'}}</td>
-                        <td class="py-4 px-6 font-mono font-bold">{{v.voter_name}} <span class="block text-xs mt-1" style="color: var(--text-secondary)">{{v.voter_code}}</span></td>
-                        <td class="py-4 px-6 text-blue-600 font-bold uppercase tracking-wide text-xs">{{v.seat}}</td>
-                        <td class="py-4 px-6 font-bold text-green-600">{{v.candidate}}</td>
-                     </tr>
-                     <tr *ngIf="votes.length === 0"><td colspan="4" class="py-12 text-center" style="color: var(--text-secondary)">No votes recorded yet.</td></tr>
-                  </tbody>
-               </table>
-               </div>
+                   <table class="w-full text-left text-sm">
+                     <thead class="text-xs uppercase border-b sticky top-0 z-10 shadow-sm" style="background: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary)">
+                        <tr>
+                          <th class="py-4 px-6">{{ translation.t('timestampUpper') || 'TIMESTAMP' }}</th>
+                          <th class="py-4 px-6">{{ translation.t('voterCodeUpper') || 'VOTER NAME/CODE' }}</th>
+                          <th class="py-4 px-6">{{ translation.t('seatName') || 'SEAT' }}</th>
+                          <th class="py-4 px-6">{{ translation.t('candidate') || 'SELECTED CANDIDATE' }}</th>
+                        </tr>
+                     </thead>
+                     <tbody style="color: var(--text-primary)">
+                        <tr *ngFor="let v of votes" class="border-b hover:bg-black/5 transition-colors group" style="border-color: var(--border-color)">
+                           <td class="py-4 px-6 text-xs text-gray-500">{{v.time | date:'medium'}}</td>
+                           <td class="py-4 px-6 font-bold">{{v.voter_name}} <span class="block text-[10px] text-gray-400 font-mono">{{v.voter_code}}</span></td>
+                           <td class="py-4 px-6 text-blue-600 font-semibold">{{v.seat}}</td>
+                           <td class="py-4 px-6 font-bold text-green-600">{{v.candidate}}</td>
+                        </tr>
+                        <tr *ngIf="votes.length === 0">
+                           <td colspan="4" class="py-20 text-center" style="color: var(--text-secondary)">
+                              <div class="text-4xl mb-2">🕵️‍♂️</div>
+                              <p class="font-bold">No votes recorded in the Live Audit Log yet.</p>
+                           </td>
+                        </tr>
+                     </tbody>
+                   </table>
+                </div>
+             </div>
+           </div>
             </div>
           </div>
 
@@ -303,7 +314,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   get filteredLeaders() {
     return this.leaders.filter(l => {
-      return this.leaderSeatFilter ? l.seat_level === this.leaderSeatFilter || l.seat_name.toLowerCase().includes(this.leaderSeatFilter.toLowerCase()) : true;
+      if (!this.leaderSeatFilter) return true;
+      return l.seat_type === this.leaderSeatFilter;
     });
   }
 

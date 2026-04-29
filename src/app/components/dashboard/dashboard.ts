@@ -72,9 +72,19 @@ const SEATS = [
             </div>
           </div>
           <!-- Voting Cards -->
-          <h2 class="text-2xl font-bold mb-6 flex items-center gap-2" style="color: var(--text-primary)">
-            <span>🗳️</span> {{t('yourVotingStatus')}}
-          </h2>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold flex items-center gap-2" style="color: var(--text-primary)">
+              <span>🗳️</span> {{t('yourVotingStatus')}}
+            </h2>
+            <button (click)="refreshVoterStatus()" 
+                    class="p-2 rounded-lg transition hover:bg-white/10 flex items-center gap-2 text-xs font-bold"
+                    [class.animate-spin]="syncing"
+                    style="color: var(--accent-color); border: 1px solid var(--border-color)">
+              <span *ngIf="!syncing">🔄</span>
+              <span *ngIf="syncing">⌛</span>
+              {{ syncing ? 'SYNCING...' : 'REFRESH STATUS' }}
+            </button>
+          </div>
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div *ngFor="let seat of seats"
                  class="rounded-3xl p-8 border-2 transition-all hover:scale-105 backdrop-blur-sm shadow-xl"
@@ -136,30 +146,54 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Initialization: Loads voter session and refreshes live vote status from backend
     window.addEventListener('langChanged', this.langChangedHandler);
-    this.currentUser = this.authService.getCurrentUser();
-    if (!this.currentUser) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    this.api.getVoterStatus(this.currentUser.id).subscribe({
-      next: (data: { has_voted: string[]; }) => {
-        // Sync Logic: Ensures the UI matches the actual database state for cast votes
-        const hasVoted: { [key: string]: boolean } = {};
-        SEATS.forEach(s => hasVoted[s.seat_type] = false);
-        data.has_voted.forEach((seat: string) => hasVoted[seat] = true);
-        this.currentUser = { ...this.currentUser!, has_voted: hasVoted };
-        this.authService.setCurrentUser(this.currentUser);
-      },
-      error: (err: any) => console.error('Could not refresh voter status', err)
+    
+    // Use the observable to keep the UI in sync with AuthService state
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      if (!user && this.router.url === '/dashboard') {
+        this.router.navigate(['/login']);
+      }
     });
+
+    if (this.currentUser) {
+      this.refreshVoterStatus();
+    }
   }
 
   ngOnDestroy() {
-    clearInterval(this.interval);
+    if (this.interval) clearInterval(this.interval);
     window.removeEventListener('langChanged', this.langChangedHandler);
+  }
+
+  syncing = false;
+  refreshVoterStatus() {
+    if (!this.currentUser || this.syncing) return;
+    this.syncing = true;
+    this.api.getVoterStatus(this.currentUser.id).subscribe({
+      next: (data: { has_voted: string[]; }) => {
+        const backendHasVoted: { [key: string]: boolean } = {};
+        SEATS.forEach(s => backendHasVoted[s.seat_type] = false);
+        data.has_voted.forEach((seat: string) => backendHasVoted[seat] = true);
+        
+        // Merge: Keep local 'true' values even if backend says 'false' (prevents flicker)
+        const currentLocal = this.currentUser?.has_voted || {};
+        const merged: { [key: string]: boolean } = {};
+        SEATS.forEach(s => {
+          merged[s.seat_type] = backendHasVoted[s.seat_type] || currentLocal[s.seat_type];
+        });
+
+        const updatedUser = { ...this.currentUser!, has_voted: merged };
+        this.authService.setCurrentUser(updatedUser);
+        this.syncing = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Could not refresh voter status', err);
+        this.syncing = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   hasVoted(seatType: string): boolean {
