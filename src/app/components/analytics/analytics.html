@@ -28,38 +28,9 @@
   </button>
   
   <header class="dashboard-header mb-8">
-    <h1 class="text-4xl font-bold mb-2">{{t('analyticsTitle')}}</h1>
-    <p style="color: var(--text-secondary)">{{t('analyticsDesc')}}</p>
+    <h1 class="text-4xl font-bold mb-2">{{t('personalizedAnalyticsTitle') || 'Your Regional Analytics'}}</h1>
+    <p style="color: var(--text-secondary)">{{t('personalizedAnalyticsDesc') || 'Real-time voting data for your registered region and national races.'}}</p>
   </header>
-
-  <div class="filters-panel card mb-8 p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)">
-    <h2 class="text-2xl font-bold mb-4">{{t('filterResults')}}</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="filter-group">
-        <label class="block mb-2 font-bold">{{t('province')}}</label>
-        <select [(ngModel)]="selectedProvince" (change)="onProvinceChange()" class="w-full p-3 rounded-lg border focus:outline-none transition-colors" style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
-          <option value="">{{t('allProvinces')}}</option>
-          <option *ngFor="let p of provinces" [value]="p">{{ p }}</option>
-        </select>
-      </div>
-
-      <div class="filter-group" [class.opacity-50]="!selectedProvince">
-        <label class="block mb-2 font-bold">{{t('county')}}</label>
-        <select [(ngModel)]="selectedCounty" (change)="onCountyChange()" class="w-full p-3 rounded-lg border focus:outline-none transition-colors" style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)" [disabled]="!selectedProvince">
-          <option value="">{{t('allCounties')}}</option>
-          <option *ngFor="let c of availableCounties" [value]="c.id">{{ c.name }}</option>
-        </select>
-      </div>
-
-      <div class="filter-group" [class.opacity-50]="!selectedCounty">
-        <label class="block mb-2 font-bold">{{t('constituency')}}</label>
-        <select [(ngModel)]="selectedConstituency" (change)="onConstituencyChange()" class="w-full p-3 rounded-lg border focus:outline-none transition-colors" style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)" [disabled]="!selectedCounty">
-          <option value="">{{t('allConstituencies')}}</option>
-          <option *ngFor="let c of availableConstituencies" [value]="c.id">{{ c.name }}</option>
-        </select>
-      </div>
-    </div>
-  </div>
 
   <div class="grid-layout space-y-8">
     <!-- Regional Overview Chart -->
@@ -78,8 +49,10 @@
     </section>
 
     <!-- Comprehensive Candidate Tables -->
-    <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)" *ngFor="let seat of seatTypes">
-      <ng-container *ngIf="allCandidatesData[seat] && allCandidatesData[seat].length > 0">
+    <ng-container *ngFor="let seat of seatTypes">
+      <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" 
+               style="background: var(--bg-card); border-color: var(--border-color)" 
+               *ngIf="allCandidatesData[seat] && allCandidatesData[seat].length > 0">
         <h2 class="text-2xl font-bold mb-4 uppercase">{{ t('seat_' + seat) }} {{ translation.t('results') || 'Results' }}</h2>
         <div class="overflow-x-auto mb-4">
           <table class="w-full text-left border-collapse">
@@ -113,8 +86,8 @@
              </div>
           </div>
         </details>
-      </ng-container>
-    </section>
+      </section>
+    </ng-container>
     
     <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)" *ngIf="(allCandidatesData | keyvalue)?.length === 0">
       <div class="text-center p-8 text-gray-500">

@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { COUNTIES, CONSTITUENCIES } from '../../utils/locations';
 import { Router } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
+import { AuthService } from '../../services/auth';
 Chart.register(...registerables);
 
 @Component({
@@ -16,25 +17,6 @@ Chart.register(...registerables);
   styleUrls: ['./analytics.css']
 })
 export class AnalyticsComponent implements OnInit, OnDestroy {
-  // Cascading Filter Data
-  provinces = ['Coast', 'North Eastern', 'Eastern', 'Central', 'Rift Valley', 'Western', 'Nyanza', 'Nairobi'];
-  
-  // A simplified mapping for UI purposes
-  countyMap: { [key: string]: number[] } = {
-    'Coast': [1,2,3,4,5,6],
-    'North Eastern': [7,8,9],
-    'Eastern': [10,11,12,13,14,15,16,17],
-    'Central': [18,19,20,21,22],
-    'Rift Valley': [23,24,25,26,27,28,29,30,31,32,33,34,35,36],
-    'Western': [37,38,39,40],
-    'Nyanza': [41,42,43,44,45,46],
-    'Nairobi': [47]
-  };
-
-  selectedProvince = '';
-  selectedCounty = '';
-  selectedConstituency = '';
-
   availableCounties: any[] = [];
   availableConstituencies: any[] = [];
 
@@ -49,6 +31,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient, 
     private router: Router, 
+    private authService: AuthService,
     public translation: TranslationService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -88,45 +71,19 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  onProvinceChange() {
-    this.selectedCounty = '';
-    this.selectedConstituency = '';
-    if (this.selectedProvince) {
-      const countyIds = this.countyMap[this.selectedProvince] || [];
-      this.availableCounties = COUNTIES.filter(c => countyIds.includes(c.id));
-    } else {
-      this.availableCounties = [];
-    }
-    this.availableConstituencies = [];
-    this.fetchAllCandidates();
-  }
-
-  onCountyChange() {
-    this.selectedConstituency = '';
-    if (this.selectedCounty) {
-       this.availableConstituencies = CONSTITUENCIES.filter(c => c.countyId == +this.selectedCounty);
-    } else {
-       this.availableConstituencies = [];
-    }
-    this.fetchAllCandidates();
-  }
-
-  onConstituencyChange() {
-    this.fetchAllCandidates();
-  }
-
   fetchAllCandidates() {
+    const user = this.authService.getCurrentUser();
+    if (!user) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     const baseUrl = window.location.hostname === 'localhost' 
       ? 'http://127.0.0.1:8000' 
       : 'https://web-production-a0d6df.up.railway.app';
-    let url = `${baseUrl}/results/all_candidates?`;
-    if (this.selectedConstituency) {
-      url += `constituency=${this.selectedConstituency}`;
-    } else if (this.selectedCounty) {
-      url += `county=${this.selectedCounty}`;
-    } else if (this.selectedProvince) {
-      url += `province=${this.selectedProvince}`;
-    }
+    
+    // Scoped fetch: analytics only shows user's relevant candidates
+    let url = `${baseUrl}/results/all_candidates?county=${user.county}&constituency=${user.constituency}&ward=${user.ward}`;
 
     this.http.get<any>(url).subscribe(data => {
       this.allCandidatesData = data;
