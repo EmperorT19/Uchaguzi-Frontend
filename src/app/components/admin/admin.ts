@@ -159,12 +159,19 @@ import { ApiService } from '../../services/api.service';
                            <option value="woman_rep">Woman Rep</option>
                            <option value="mca">MCA</option>
                         </select>
-                     </div>
+                      </div>
                       <div class="flex gap-2 w-full sm:w-auto">
-                        <button *ngIf="candidates.length === 0" (click)="forceLoadCandidates()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors animate-bounce">FORCE LOAD CANDIDATES</button>
+                        <button (click)="forceLoadCandidates()" [disabled]="loading" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors" [class.opacity-50]="loading">{{ loading ? 'SEEDING...' : 'FORCE LOAD' }}</button>
                         <button (click)="deleteAllCandidates()" class="flex-1 bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">DELETE ALL</button>
                         <button (click)="isAddingCandidate = !isAddingCandidate" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">+ NEW</button>
                       </div>
+                  </div>
+                  <!-- Seeding Progress Banner -->
+                  <div *ngIf="seedingStatus" class="p-3 text-center font-bold text-sm border-b animate-pulse" 
+                       [style.background]="seedingStatus.includes('Complete') ? '#065f46' : seedingStatus.includes('FAILED') ? '#7f1d1d' : '#1e3a5f'"
+                       [style.color]="'white'"
+                       style="border-color: var(--border-color)">
+                    {{ seedingStatus }}
                   </div>
 
                   <!-- Add Candidate Modal Inline -->
@@ -270,14 +277,10 @@ import { ApiService } from '../../services/api.service';
                 </div>
              </div>
            </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  `
+         </div>
+       </div>
+     </div>
+   `
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   isAuthenticated = false;
@@ -303,6 +306,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   newCandidateParty = '';
   newCandidateSeat = 'president';
   isAddingCandidate = false;
+  seedingStatus: string = '';
 
   get filteredCandidates() {
     return this.candidates.filter(c => {
@@ -391,7 +395,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.refreshInterval = setInterval(() => {
        this.loadStats();
        this.loadTabData();
-    }, 2000);
+    }, 10000);
   }
 
   loadTabData() {
@@ -498,26 +502,57 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
      }
   }
   forceLoadCandidates() {
-    /* 
-      Bulk Seeding (CRITICAL): 
-      Calls the backend load_candidates command to populate ~15,000 candidates from CSV.
-      This is required to synchronize the production DB with the Kenyan regional mapping.
-    */
-    if(!confirm("Attempting to load ~15,000 candidates from server-side CSV. This may take 30-60 seconds. Proceed?")) return;
+    if(!confirm("This will seed ~8,000+ candidates from the server CSV. The process runs in the background. Proceed?")) return;
     this.loading = true;
+    this.seedingStatus = 'Starting seeding...';
+    
+    // Stop normal polling to reduce server load during seeding
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
+    
     this.api.forceLoadCandidates(this.token, "IEBC2026").subscribe({
         next: (res) => {
-            alert(`SUCCESS: ${res.stdout || 'Data loaded.'}`);
-            this.loading = false;
-            this.loadTabData();
-            this.loadStats();
+            this.seedingStatus = res.message || 'Seeding started in background...';
+            this.cdr.detectChanges();
+            // Poll for completion status
+            this.pollSeedingStatus();
         },
         error: (err) => {
-            alert(`FAILED: ${err.error?.error || 'Unknown error'}`);
+            this.seedingStatus = `FAILED: ${err.error?.error || 'Unknown error'}`;
             this.loading = false;
+            this.startPolling();
             this.cdr.detectChanges();
         }
     });
+  }
+
+  private seedingPollInterval: any;
+  pollSeedingStatus() {
+    if (this.seedingPollInterval) clearInterval(this.seedingPollInterval);
+    this.seedingPollInterval = setInterval(() => {
+      this.api.getSeedingStatus(this.token).subscribe({
+        next: (res) => {
+          this.seedingStatus = res.running 
+            ? `⏳ Seeding in progress... (${res.total_candidates} candidates, ${res.total_seats} seats so far)`
+            : res.message || res.error || 'Done.';
+          this.cdr.detectChanges();
+          
+          if (!res.running) {
+            // Seeding finished
+            clearInterval(this.seedingPollInterval);
+            this.loading = false;
+            this.seedingStatus = `✅ Complete! ${res.total_candidates} candidates across ${res.total_seats} seats.`;
+            this.loadTabData();
+            this.loadStats();
+            this.startPolling();
+            this.cdr.detectChanges();
+          }
+        },
+        error: () => {
+          this.seedingStatus = 'Could not check status. Retrying...';
+          this.cdr.detectChanges();
+        }
+      });
+    }, 3000);
   }
 }
 

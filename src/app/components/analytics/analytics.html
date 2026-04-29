@@ -22,54 +22,127 @@
     </div>
   </div>
 
-<div class="analytics-container p-4 md:p-8">
-  <button (click)="goTo('/dashboard')" class="mb-6 px-6 py-2 rounded-lg font-bold transition-colors border" style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); hover:background: var(--bg-primary)">
+<div class="analytics-container p-4 md:p-8 max-w-7xl mx-auto">
+  <button (click)="goTo('/dashboard')" class="mb-6 px-6 py-2 rounded-lg font-bold transition-colors border" style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color)">
     ← {{ translation.t('backToDashboard') || 'Back to Dashboard' }}
   </button>
   
   <header class="dashboard-header mb-8">
-    <h1 class="text-4xl font-bold mb-2">{{t('personalizedAnalyticsTitle') || 'Your Regional Analytics'}}</h1>
-    <p style="color: var(--text-secondary)">{{t('personalizedAnalyticsDesc') || 'Real-time voting data for your registered region and national races.'}}</p>
+    <h1 class="text-3xl md:text-4xl font-bold mb-2">📊 {{ t('analyticsTitle') || 'Advanced Regional Analytics' }}</h1>
+    <p style="color: var(--text-secondary)">{{ t('analyticsDesc') || 'Filter votes cast by Province, County, or Constituency' }}</p>
   </header>
 
+  <!-- FILTERS -->
+  <section class="card p-6 rounded-2xl border mb-8 transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)">
+    <h2 class="text-lg font-bold mb-4 uppercase tracking-wider" style="color: var(--accent-color)">🔍 {{ t('filterResults') || 'Filter Results' }}</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Province Filter -->
+      <div>
+        <label class="block text-xs font-bold mb-1 uppercase" style="color: var(--text-secondary)">{{ t('province') || 'Province' }}</label>
+        <select [(ngModel)]="selectedProvince" (ngModelChange)="onProvinceChange()" 
+                class="w-full border rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+                style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
+          <option value="">{{ t('allProvinces') || '-- All Provinces (My Region) --' }}</option>
+          <option *ngFor="let p of provinces" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+      <!-- County Filter -->
+      <div>
+        <label class="block text-xs font-bold mb-1 uppercase" style="color: var(--text-secondary)">{{ t('county') || 'County' }}</label>
+        <select [(ngModel)]="selectedCounty" (ngModelChange)="onCountyChange()" 
+                [disabled]="!selectedProvince"
+                class="w-full border rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+                [style.opacity]="selectedProvince ? '1' : '0.5'"
+                style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
+          <option value="">{{ t('allCounties') || '-- All Counties in Province --' }}</option>
+          <option *ngFor="let c of availableCounties" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <!-- Seat Type Filter -->
+      <div>
+        <label class="block text-xs font-bold mb-1 uppercase" style="color: var(--text-secondary)">{{ t('seatName') || 'Seat Type' }}</label>
+        <select [(ngModel)]="selectedSeatType" (ngModelChange)="onSeatTypeChange()"
+                class="w-full border rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+                style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
+          <option value="">All Seats</option>
+          <option value="president">{{ t('seat_president') }}</option>
+          <option value="governor">{{ t('seat_governor') }}</option>
+          <option value="senator">{{ t('seat_senator') }}</option>
+          <option value="mp">{{ t('seat_mp') }}</option>
+          <option value="woman_rep">{{ t('seat_woman_rep') }}</option>
+          <option value="mca">{{ t('seat_mca') }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="mt-4 text-sm font-semibold flex items-center gap-2" style="color: var(--accent-color)">
+      <span>📍</span> Showing: {{ regionLabel }}
+      <span *ngIf="loading" class="ml-2 animate-spin inline-block">⏳</span>
+    </div>
+  </section>
+
   <div class="grid-layout space-y-8">
-    <!-- Regional Overview Chart -->
-    <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)">
-      <h2 class="text-2xl font-bold mb-2">{{ translation.t('presidentialRaceOverview') || 'Presidential Race Overview' }}</h2>
-      <p class="subtitle mb-6" style="color: var(--text-secondary)">
-        <ng-container *ngIf="selectedConstituency">{{ translation.t('votesFromConstituency') || 'Votes from Constituency' }} {{ selectedConstituency }}</ng-container>
-        <ng-container *ngIf="selectedCounty && !selectedConstituency">{{ translation.t('votesFromCounty') || 'Votes from County' }} {{ selectedCounty }}</ng-container>
-        <ng-container *ngIf="selectedProvince && !selectedCounty">{{ translation.t('votesFromProvince') || 'Votes from Province' }}: {{ selectedProvince }}</ng-container>
-        <ng-container *ngIf="!selectedProvince">{{ translation.t('nationalVotes') || 'National Votes' }}</ng-container>
-      </p>
+    <!-- Presidential Overview Chart -->
+    <section *ngIf="!selectedSeatType || selectedSeatType === 'president'" class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)">
+      <h2 class="text-2xl font-bold mb-2">{{ t('presidentialRaceOverview') || 'Presidential Race Overview' }}</h2>
+      <p class="subtitle mb-6" style="color: var(--text-secondary)">📍 {{ regionLabel }}</p>
       
-      <div class="chart-container" style="height: 300px; md:height: 400px;">
+      <div class="chart-container" style="height: 300px;">
         <canvas #overviewChart></canvas>
       </div>
     </section>
 
-    <!-- Comprehensive Candidate Tables -->
-    <ng-container *ngFor="let seat of seatTypes">
+    <!-- All Seat Type Sections -->
+    <ng-container *ngFor="let seat of filteredSeatTypes">
       <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" 
                style="background: var(--bg-card); border-color: var(--border-color)" 
                *ngIf="allCandidatesData[seat] && allCandidatesData[seat].length > 0">
-        <h2 class="text-2xl font-bold mb-4 uppercase">{{ t('seat_' + seat) }} {{ translation.t('results') || 'Results' }}</h2>
+        
+        <!-- Section Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+          <h2 class="text-2xl font-bold uppercase">{{ t('seat_' + seat) }} {{ translation.t('results') || 'Results' }}</h2>
+          <div class="flex gap-4 text-sm font-mono">
+            <span class="px-3 py-1 rounded-full border" style="border-color: var(--border-color)">
+              👥 {{ getCandidateCount(seat) }} candidates
+            </span>
+            <span class="px-3 py-1 rounded-full font-bold" style="background: var(--accent-color); color: white">
+              🗳️ {{ getTotalVotesForSeat(seat) | number }} votes
+            </span>
+          </div>
+        </div>
+
+        <!-- Data Table -->
         <div class="overflow-x-auto mb-4">
-          <table class="w-full text-left border-collapse">
+          <table class="w-full text-left border-collapse text-sm">
             <thead>
               <tr style="border-bottom: 2px solid var(--border-color)">
-                <th class="p-3">{{ translation.t('seatName') || 'Seat Name' }}</th>
-                <th class="p-3">{{ translation.t('candidate') || 'Candidate' }}</th>
-                <th class="p-3">{{ translation.t('party') || 'Party' }}</th>
-                <th class="p-3">{{ translation.t('votesCast') || 'Votes Cast' }}</th>
+                <th class="p-3 text-xs uppercase" style="color: var(--text-secondary)">#</th>
+                <th class="p-3 text-xs uppercase" style="color: var(--text-secondary)">{{ translation.t('candidate') || 'Candidate' }}</th>
+                <th class="p-3 text-xs uppercase" style="color: var(--text-secondary)">{{ translation.t('party') || 'Party' }}</th>
+                <th class="p-3 text-xs uppercase" style="color: var(--text-secondary)">{{ translation.t('seatName') || 'Seat' }}</th>
+                <th class="p-3 text-xs uppercase text-right" style="color: var(--text-secondary)">{{ translation.t('votesCast') || 'Votes' }}</th>
+                <th class="p-3 text-xs uppercase" style="color: var(--text-secondary); min-width: 120px">Share</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let c of allCandidatesData[seat]" style="border-bottom: 1px solid var(--border-color)">
-                <td class="p-3">{{ c.seat_name }}</td>
-                <td class="p-3 font-bold">{{ c.candidate }}</td>
+              <tr *ngFor="let c of allCandidatesData[seat]; let i = index" 
+                  style="border-bottom: 1px solid var(--border-color)"
+                  class="hover:bg-black/5 transition-colors"
+                  [style.background]="i === 0 && c.votes > 0 ? 'rgba(16,185,129,0.05)' : 'transparent'">
+                <td class="p-3 font-mono text-xs" style="color: var(--text-secondary)">{{ i + 1 }}</td>
+                <td class="p-3 font-bold">
+                  {{ c.candidate }}
+                  <span *ngIf="i === 0 && c.votes > 0" class="ml-2 text-xs px-2 py-0.5 bg-green-600 text-white rounded-full">LEADING</span>
+                </td>
                 <td class="p-3" style="color: var(--text-secondary)">{{ c.party }}</td>
-                <td class="p-3 font-mono font-bold text-green-500">{{ c.votes | number }}</td>
+                <td class="p-3 text-xs font-mono" style="color: var(--text-secondary)">{{ c.seat_name }}</td>
+                <td class="p-3 font-mono font-bold text-right text-green-500">{{ c.votes | number }}</td>
+                <td class="p-3">
+                  <div class="w-full rounded-full h-2 overflow-hidden" style="background: var(--border-color)">
+                    <div class="h-full rounded-full transition-all" 
+                         [style.width.%]="getTotalVotesForSeat(seat) > 0 ? (c.votes / getTotalVotesForSeat(seat)) * 100 : 0"
+                         [style.background]="i === 0 ? '#10b981' : '#3b82f6'"></div>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -89,9 +162,20 @@
       </section>
     </ng-container>
     
-    <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)" *ngIf="(allCandidatesData | keyvalue)?.length === 0">
-      <div class="text-center p-8 text-gray-500">
-        {{ translation.t('noVotesRecorded') || 'No votes recorded for the selected region.' }}
+    <!-- Empty State -->
+    <section class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)" *ngIf="!loading && (allCandidatesData | keyvalue)?.length === 0">
+      <div class="text-center p-12">
+        <div class="text-6xl mb-4">📭</div>
+        <p class="text-xl font-bold mb-2">{{ translation.t('noVotesRecorded') || 'No candidates found for the selected region.' }}</p>
+        <p class="text-sm" style="color: var(--text-secondary)">Try changing the Province or County filter above.</p>
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <section *ngIf="loading" class="card full-width p-6 rounded-2xl border transition-colors shadow-sm" style="background: var(--bg-card); border-color: var(--border-color)">
+      <div class="text-center p-12">
+        <div class="text-6xl mb-4 animate-bounce">⏳</div>
+        <p class="text-xl font-bold">Loading analytics data...</p>
       </div>
     </section>
   </div>
