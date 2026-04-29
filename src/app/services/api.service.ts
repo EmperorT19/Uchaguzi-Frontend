@@ -190,4 +190,9 @@ export class ApiService {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
     return this.http.post<any>(`${this.baseUrl}/system-admin/voters/${id}/reset-password`, {}, { headers });
   }
+
+  forceLoadCandidates(token: string, secretKey: string): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.post<any>(`${this.baseUrl}/candidate/load-csv`, { secret_key: secretKey }, { headers });
+  }
 }
