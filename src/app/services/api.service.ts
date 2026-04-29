@@ -197,4 +197,9 @@ export class ApiService {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
     return this.http.post<any>(`${this.baseUrl}/system-admin/candidates/force-load`, { admin_key: adminKey }, { headers });
   }
+
+  getSeedingStatus(token: string): Observable<any> {
+    const headers = this.headers().set('Authorization', `Bearer ${token}`);
+    return this.http.get<any>(`${this.baseUrl}/system-admin/candidates/force-load/status`, { headers });
+  }
 }

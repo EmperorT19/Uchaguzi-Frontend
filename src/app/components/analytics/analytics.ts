@@ -3,11 +3,34 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { HttpClient } from '@angular/common/http';
-import { COUNTIES, CONSTITUENCIES } from '../../utils/locations';
 import { Router } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
 import { AuthService } from '../../services/auth';
 Chart.register(...registerables);
+
+// Province → County ID mappings for filter
+const PROVINCES: { [key: string]: { name: string; counties: number[] } } = {
+  'Coast':    { name: 'Coast',    counties: [1, 2, 3, 4, 5, 6] },
+  'North Eastern': { name: 'North Eastern', counties: [7, 8, 9] },
+  'Eastern':  { name: 'Eastern',  counties: [10, 11, 12, 13, 14, 15, 16, 17] },
+  'Central':  { name: 'Central',  counties: [18, 19, 20, 21, 22] },
+  'Rift Valley': { name: 'Rift Valley', counties: [23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36] },
+  'Western':  { name: 'Western',  counties: [37, 38, 39, 40] },
+  'Nyanza':   { name: 'Nyanza',   counties: [41, 42, 43, 44, 45, 46] },
+  'Nairobi':  { name: 'Nairobi',  counties: [47] }
+};
+
+const COUNTY_NAMES: { [key: number]: string } = {
+  1: 'Mombasa', 2: 'Kwale', 3: 'Kilifi', 4: 'Tana River', 5: 'Lamu', 6: 'Taita-Taveta',
+  7: 'Garissa', 8: 'Wajir', 9: 'Mandera', 10: 'Marsabit', 11: 'Isiolo', 12: 'Meru',
+  13: 'Tharaka-Nithi', 14: 'Embu', 15: 'Kitui', 16: 'Machakos', 17: 'Makueni',
+  18: 'Nyandarua', 19: 'Nyeri', 20: 'Kirinyaga', 21: "Murang'a", 22: 'Kiambu',
+  23: 'Turkana', 24: 'West Pokot', 25: 'Samburu', 26: 'Trans-Nzoia', 27: 'Uasin Gishu',
+  28: 'Elgeyo-Marakwet', 29: 'Nandi', 30: 'Baringo', 31: 'Laikipia', 32: 'Nakuru',
+  33: 'Narok', 34: 'Kajiado', 35: 'Kericho', 36: 'Bomet', 37: 'Kakamega', 38: 'Vihiga',
+  39: 'Bungoma', 40: 'Busia', 41: 'Siaya', 42: 'Kisumu', 43: 'Homa Bay', 44: 'Migori',
+  45: 'Kisii', 46: 'Nyamira', 47: 'Nairobi'
+};
 
 @Component({
   selector: 'app-analytics',
@@ -17,12 +40,18 @@ Chart.register(...registerables);
   styleUrls: ['./analytics.css']
 })
 export class AnalyticsComponent implements OnInit, OnDestroy {
-  availableCounties: any[] = [];
-  availableConstituencies: any[] = [];
+  // Filter state
+  selectedProvince: string = '';
+  selectedCounty: string = '';
+  selectedSeatType: string = '';
+  
+  provinces = Object.keys(PROVINCES);
+  availableCounties: { id: number; name: string }[] = [];
 
   // Data
   allCandidatesData: any = {};
   seatTypes = ['president', 'governor', 'senator', 'woman_rep', 'mp', 'mca'];
+  loading = false;
 
   @ViewChild('overviewChart') overviewChartRef!: ElementRef;
   overviewChartInstance: any;
@@ -43,6 +72,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   ngOnInit() {
     window.addEventListener('langChanged', this.langChangedHandler);
     this.setupThemeListener();
+    // Load data for user's region immediately
     this.fetchAllCandidates();
   }
 
@@ -51,24 +81,55 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   setupThemeListener() {
-    // Set initial chart theme based on current root data-theme
     this.updateChartTheme(document.documentElement.getAttribute('data-theme') === 'dark');
-
-    // Listen for custom themeChanged events
     window.addEventListener('themeChanged', ((e: CustomEvent) => {
       this.updateChartTheme(e.detail.isDark);
-      this.renderOverviewChart(); // Re-render to apply new defaults
+      this.renderOverviewChart();
     }) as EventListener);
   }
 
   updateChartTheme(isDark: boolean) {
     if (isDark) {
-      Chart.defaults.color = '#9ca3af'; // text-secondary dark
-      Chart.defaults.borderColor = '#374151'; // border-color dark
+      Chart.defaults.color = '#9ca3af';
+      Chart.defaults.borderColor = '#374151';
     } else {
-      Chart.defaults.color = '#6b7280'; // text-secondary light
-      Chart.defaults.borderColor = '#e5e7eb'; // border-color light
+      Chart.defaults.color = '#6b7280';
+      Chart.defaults.borderColor = '#e5e7eb';
     }
+  }
+
+  onProvinceChange() {
+    this.selectedCounty = '';
+    if (this.selectedProvince && PROVINCES[this.selectedProvince]) {
+      this.availableCounties = PROVINCES[this.selectedProvince].counties.map(id => ({
+        id, name: COUNTY_NAMES[id] || `County ${id}`
+      }));
+    } else {
+      this.availableCounties = [];
+    }
+    this.fetchAllCandidates();
+  }
+
+  onCountyChange() {
+    this.fetchAllCandidates();
+  }
+
+  onSeatTypeChange() {
+    // Just re-render — data is already filtered in the template
+    this.cdr.detectChanges();
+  }
+
+  get filteredSeatTypes(): string[] {
+    if (this.selectedSeatType) return [this.selectedSeatType];
+    return this.seatTypes;
+  }
+
+  get regionLabel(): string {
+    if (this.selectedCounty) {
+      return COUNTY_NAMES[parseInt(this.selectedCounty)] || `County ${this.selectedCounty}`;
+    }
+    if (this.selectedProvince) return this.selectedProvince + ' Province';
+    return this.t('nationalVotes') || 'National (All Regions)';
   }
 
   fetchAllCandidates() {
@@ -82,15 +143,36 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       ? 'http://127.0.0.1:8000' 
       : 'https://web-production-a0d6df.up.railway.app';
     
-    // Scoped fetch: analytics only shows user's relevant candidates
-    let url = `${baseUrl}/results/all_candidates?county=${user.county}&constituency=${user.constituency}&ward=${user.ward}`;
+    this.loading = true;
+    
+    // Build query params based on filters
+    let params: string[] = [];
+    
+    if (this.selectedCounty) {
+      params.push(`county=${this.selectedCounty}`);
+    } else if (this.selectedProvince) {
+      params.push(`province=${this.selectedProvince}`);
+    } else {
+      // Default: show user's region
+      params.push(`county=${user.county}`);
+      params.push(`constituency=${user.constituency}`);
+      params.push(`ward=${user.ward}`);
+    }
 
-    this.http.get<any>(url).subscribe(data => {
-      this.allCandidatesData = data;
-      this.renderOverviewChart();
-      // Sync Logic: Automatically redraws any expanded seat charts when new data arrives
-      this.refreshAllVisibleCharts();
-      this.cdr.detectChanges();
+    let url = `${baseUrl}/results/all_candidates?${params.join('&')}`;
+
+    this.http.get<any>(url).subscribe({
+      next: (data) => {
+        this.allCandidatesData = data;
+        this.loading = false;
+        this.renderOverviewChart();
+        this.refreshAllVisibleCharts();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -106,9 +188,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   renderOverviewChart() {
     if (!this.overviewChartRef) return;
     
-    // We'll chart the Presidential race as the primary overview
     const presidentData = this.allCandidatesData['president'] || [];
-    
     const labels = presidentData.map((c: any) => c.candidate);
     const data = presidentData.map((c: any) => c.votes);
 
@@ -119,16 +199,20 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       data: {
         labels: labels,
         datasets: [{
-          label: 'Presidential Votes',
+          label: this.t('seat_president') + ' ' + this.t('votes'),
           data: data,
-          backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
-          borderRadius: 4
+          backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'],
+          borderRadius: 6
         }]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true }
         }
       }
     });
@@ -140,8 +224,10 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       if (!canvas) return;
 
       const seatData = this.allCandidatesData[seat] || [];
-      const labels = seatData.map((c: any) => c.candidate);
-      const data = seatData.map((c: any) => c.votes);
+      // Take top 15 candidates for chart readability
+      const topCandidates = seatData.slice(0, 15);
+      const labels = topCandidates.map((c: any) => c.candidate);
+      const data = topCandidates.map((c: any) => c.votes);
 
       if (this.seatChartInstances[seat]) {
         this.seatChartInstances[seat].destroy();
@@ -152,10 +238,10 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         data: {
           labels: labels,
           datasets: [{
-            label: `${this.t('seat_' + seat)} Votes`,
+            label: `${this.t('seat_' + seat)} ${this.t('votes')}`,
             data: data,
-            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-            borderRadius: 4
+            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6'],
+            borderRadius: 6
           }]
         },
         options: {
@@ -163,10 +249,22 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
           }
         }
       });
-    }, 100); // small delay to allow details tag to expand and canvas to be ready
+    }, 150);
+  }
+
+  getTotalVotesForSeat(seat: string): number {
+    const data = this.allCandidatesData[seat] || [];
+    return data.reduce((sum: number, c: any) => sum + (c.votes || 0), 0);
+  }
+
+  getCandidateCount(seat: string): number {
+    return (this.allCandidatesData[seat] || []).length;
   }
 
   t(key: string): string {
