@@ -46,7 +46,7 @@ import { ApiService } from '../../services/api.service';
 
       <!-- Dashboard View -->
       <div *ngIf="isAuthenticated" class="min-h-screen font-mono" style="background: var(--bg-primary)">
-        <div class="text-white px-8 py-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-red-600 shadow-lg gap-4" style="background: #991b1b">
+        <div class="text-white px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center border-b-4 border-red-600 shadow-lg gap-4" style="background: #991b1b">
           <div class="flex items-center gap-4">
             <span class="text-2xl animate-pulse">🔴</span>
             <div>
@@ -54,7 +54,7 @@ import { ApiService } from '../../services/api.service';
               <p class="text-xs text-red-200">{{ translation.t('liveSystemObservatory') || 'LIVE SYSTEM OBSERVATORY' }}</p>
             </div>
           </div>
-          <div class="flex items-center gap-4">
+          <div class="flex gap-4 items-center w-full md:w-auto justify-between md:justify-end">
             <button (click)="translation.toggleLang()" class="px-4 py-2 bg-black/30 hover:bg-black/50 text-white border border-white/20 rounded-lg font-bold transition-colors">
               {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
             </button>

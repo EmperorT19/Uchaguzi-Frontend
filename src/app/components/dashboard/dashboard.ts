@@ -20,20 +20,20 @@ const SEATS = [
     <div class="min-h-screen transition-colors duration-300" style="background: var(--bg-primary); color: var(--text-primary)" [attr.data-lang]="translation.langTick">
       <!-- Navigation -->
       <div class="backdrop-blur-md border-b sticky top-0 z-40 transition-colors duration-300" style="background: var(--header-bg); border-color: var(--border-color)">
-        <div class="container mx-auto px-8 py-4">
-          <div class="flex justify-between items-center">
-            <div class="flex gap-4">
-              <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold shadow-lg transition" style="background: var(--accent-color); color: white; border: 1px solid var(--border-color)">{{t('dashboard')}}</button>
-              <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('vote')}}</button>
-              <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('results')}}</button>
-              <button (click)="goTo('/analytics')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('analytics')}}</button>
-              <button (click)="goTo('/admin-portal')" class="px-8 py-3 rounded-xl font-bold transition hover:opacity-80" style="background: transparent; color: #ef4444; border: 1px solid #ef4444">{{translation.t('adminPortal') || 'Admin Portal'}}</button>
+        <div class="container mx-auto px-4 md:px-8 py-4">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex flex-wrap justify-center md:justify-start gap-2 md:gap-4">
+              <button (click)="goTo('/dashboard')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold shadow-lg transition text-sm md:text-base" style="background: var(--accent-color); color: white; border: 1px solid var(--border-color)">{{t('dashboard')}}</button>
+              <button (click)="goTo('/voting')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold transition hover:opacity-80 text-sm md:text-base" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('vote')}}</button>
+              <button (click)="goTo('/results')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold transition hover:opacity-80 text-sm md:text-base" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('results')}}</button>
+              <button (click)="goTo('/analytics')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold transition hover:opacity-80 text-sm md:text-base" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('analytics')}}</button>
+              <button (click)="goTo('/admin-portal')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-bold transition hover:opacity-80 text-sm md:text-base" style="background: transparent; color: #ef4444; border: 1px solid #ef4444">{{translation.t('adminPortal') || 'Admin Portal'}}</button>
             </div>
-            <div class="flex gap-4 items-center">
+            <div class="flex gap-4 items-center w-full md:w-auto justify-between md:justify-end">
               <button (click)="translation.toggleLang()" class="px-4 py-2 font-bold rounded-lg transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">
                 {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
               </button>
-              <button (click)="logout()" class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl shadow-lg">{{t('logout')}}</button>
+              <button (click)="logout()" class="px-6 md:px-8 py-2 md:py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl shadow-lg">{{t('logout')}}</button>
             </div>
           </div>
         </div>
@@ -43,7 +43,7 @@ const SEATS = [
           <!-- User Info -->
           <div class="mb-8 backdrop-blur-sm rounded-2xl p-8 border shadow-lg transition-colors duration-300" style="background: var(--bg-card); border-color: var(--border-color)">
             <p class="text-sm text-gray-400 mb-1 uppercase tracking-wider">{{t('welcomeBack')}}</p>
-            <h1 class="text-6xl font-bold uppercase" style="color: var(--accent-color)">
+            <h1 class="text-4xl md:text-6xl font-bold uppercase break-words" style="color: var(--accent-color)">
               {{ currentUser?.full_name }}
             </h1>
             <div class="mt-4 space-y-2">
