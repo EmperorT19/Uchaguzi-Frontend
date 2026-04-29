@@ -177,19 +177,21 @@ const SEAT_META: { [key: string]: { name: string; icon: string } } = {
 
       <!-- Navigation -->
       <div class="backdrop-blur-md border-b sticky top-0 z-40 transition-colors duration-300" style="background: var(--header-bg); border-color: var(--border-color)">
-        <div class="container mx-auto px-8 py-4 flex justify-between items-center">
-          <div class="flex gap-4">
-            <button (click)="goTo('/dashboard')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('dashboard')}}</button>
-            <button (click)="goTo('/voting')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('vote')}}</button>
-            <button (click)="goTo('/results')" class="px-8 py-3 rounded-xl font-semibold shadow-lg transition" style="background: var(--accent-color); color: white; border: 1px solid var(--border-color)">{{t('results')}}</button>
-            <button (click)="goTo('/analytics')" class="px-8 py-3 rounded-xl font-semibold transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{translation.t('analytics')}}</button>
-            <button (click)="goTo('/admin-portal')" class="px-8 py-3 rounded-xl font-bold transition hover:opacity-80" style="background: transparent; color: #ef4444; border: 1px solid #ef4444">{{translation.t('adminPortal') || 'Admin Portal'}}</button>
-          </div>
-          <div class="flex gap-4 items-center">
-            <button (click)="translation.toggleLang()" class="px-4 py-2 font-bold rounded-lg border transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color)">
-              {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
-            </button>
-            <button (click)="logout()" class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl">{{t('logout')}}</button>
+        <div class="container mx-auto px-4 md:px-8 py-4">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex flex-wrap justify-center md:justify-start gap-2 md:gap-4">
+              <button (click)="goTo('/dashboard')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold transition hover:opacity-80 text-sm md:text-base" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('dashboard')}}</button>
+              <button (click)="goTo('/voting')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold transition hover:opacity-80 text-sm md:text-base" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{t('vote')}}</button>
+              <button (click)="goTo('/results')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold shadow-lg transition text-sm md:text-base" style="background: var(--accent-color); color: white; border: 1px solid var(--border-color)">{{t('results')}}</button>
+              <button (click)="goTo('/analytics')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-semibold transition hover:opacity-80 text-sm md:text-base" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color)">{{translation.t('analytics')}}</button>
+              <button (click)="goTo('/admin-portal')" class="px-4 md:px-8 py-2 md:py-3 rounded-xl font-bold transition hover:opacity-80 text-sm md:text-base" style="background: transparent; color: #ef4444; border: 1px solid #ef4444">{{translation.t('adminPortal') || 'Admin Portal'}}</button>
+            </div>
+            <div class="flex gap-4 items-center w-full md:w-auto justify-between md:justify-end">
+              <button (click)="translation.toggleLang()" class="px-4 py-2 font-bold rounded-lg border transition hover:opacity-80" style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color)">
+                {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
+              </button>
+              <button (click)="logout()" class="px-6 md:px-8 py-2 md:py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl">{{t('logout')}}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -197,8 +199,8 @@ const SEAT_META: { [key: string]: { name: string; icon: string } } = {
       <!-- Content -->
       <div class="min-h-screen p-8 transition-colors duration-300" style="background: var(--bg-primary)">
         <div class="max-w-7xl mx-auto">
-          <div class="flex items-center justify-between mb-8">
-            <h1 class="text-5xl font-bold" style="color: var(--text-primary)">{{t('liveResults')}}</h1>
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <h1 class="text-4xl md:text-5xl font-bold" style="color: var(--text-primary)">{{t('liveResults')}}</h1>
             <div class="flex items-center gap-2 text-sm" style="color: var(--text-secondary)">
               <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse inline-block"></span>
               {{t('liveRefreshes')}}

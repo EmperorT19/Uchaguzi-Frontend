@@ -30,4 +30,65 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fluid Typography & Responsive Overrides */
+h1 { font-size: clamp(2rem, 8vw, 4rem); }
+h2 { font-size: clamp(1.5rem, 5vw, 2.5rem); }
+
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  .flex-responsive {
+    flex-direction: column !important;
+  }
+  
+  .gap-responsive {
+    gap: 1rem !important;
+  }
+
+  /* Hide labels on small buttons if needed or stack them */
+  .nav-button {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .nav-container {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* Custom Scrollbar for better UX on mobile/web */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select, a {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Horizontal Table Fix */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
 }
