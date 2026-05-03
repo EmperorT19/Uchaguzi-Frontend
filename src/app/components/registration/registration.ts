@@ -5276,7 +5276,7 @@ export class RegistrationComponent implements OnInit {
     
     if (this.form.phone === '+254' || !this.form.phone) this.errors.phone = 'Required';
     else if (!/^(?:\+2547|\+2541)\d{8}$/.test(this.form.phone)) this.errors.phone = 'Must be exactly +254 7... or +254 1... and 13 chars total';
-    else if (/(\d)\1{2,}/.test(this.form.phone.slice(4))) this.errors.phone = 'Cannot contain repeating identical digits (e.g. 000, 111, 222)';
+    else if (/(\d)\1{3,}/.test(this.form.phone.slice(4))) this.errors.phone = 'Cannot contain 4 or more repeating identical digits (e.g. 0000, 1111)';
     
     return Object.keys(this.errors).length === 0;
   }
