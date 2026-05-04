@@ -112,13 +112,18 @@ import { ApiService } from '../../services/api.service';
                <button (click)="activeTab = 'candidates'; loadTabData()" [ngClass]="{'border-b-2 border-red-500': activeTab === 'candidates'}" class="flex-1 min-w-[120px] py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none" style="color: var(--text-primary)">{{ translation.t('candidates') }}</button>
                <button (click)="activeTab = 'leaders'; loadTabData()" [ngClass]="{'border-b-2 border-red-500': activeTab === 'leaders'}" class="flex-1 min-w-[120px] py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none" style="color: var(--text-primary)">{{ translation.t('electionLeaders') }}</button>
                <button (click)="activeTab = 'votes'; loadTabData()" [ngClass]="{'border-b-2 border-red-500': activeTab === 'votes'}" class="flex-1 min-w-[120px] py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none flex items-center justify-center gap-2" style="color: var(--text-primary)">{{ translation.t('liveAuditLog') }} <span class="animate-pulse w-2 h-2 rounded-full bg-red-500"></span></button>
+               <button (click)="activeTab = 'reports'" [ngClass]="{'border-b-2 border-red-500': activeTab === 'reports'}" class="flex-1 min-w-[120px] py-4 font-bold tracking-widest text-sm transition-colors outline-none focus:outline-none flex items-center justify-center gap-2" style="color: var(--text-primary)">📄 REPORTS</button>
             </div>
             
             <div class="p-0 overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
                <!-- Voters Table -->
                <div *ngIf="activeTab === 'voters'" class="w-full">
-                  <div class="flex justify-between items-center p-4 border-b" style="background: var(--bg-primary); border-color: var(--border-color)">
-                     <div></div>
+                  <div class="flex justify-between items-center p-4 border-b gap-4 flex-wrap" style="background: var(--bg-primary); border-color: var(--border-color)">
+                     <div class="flex gap-2 items-center text-sm font-bold" style="color: var(--text-secondary)">
+                        <button (click)="voterPage = voterPage - 1" [disabled]="voterPage === 1" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">← Prev</button>
+                        <span>Page {{voterPage}} of {{totalVoterPages || 1}} ({{voters.length}} total)</span>
+                        <button (click)="voterPage = voterPage + 1" [disabled]="voterPage >= totalVoterPages" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">Next →</button>
+                     </div>
                      <button (click)="deleteAllVoters()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">DELETE ALL VOTERS</button>
                   </div>
                   <table class="w-full text-left text-sm">
@@ -126,7 +131,7 @@ import { ApiService } from '../../services/api.service';
                         <tr><th class="py-4 px-6">{{ translation.t('voterCodeUpper') || 'VOTER CODE' }}</th><th class="py-4 px-6">{{ translation.t('fullNameUpper') || 'FULL NAME' }}</th><th class="py-4 px-6">PASSWORD HASH</th><th class="py-4 px-6">{{ translation.t('countyUpper') || 'COUNTY' }}</th><th class="py-4 px-6">{{ translation.t('constituencyUpper') || 'CONSTITUENCY' }}</th><th class="py-4 px-6">{{ translation.t('registeredAtUpper') || 'REGISTERED AT' }}</th><th class="py-4 px-6 text-right">{{ translation.t('actionUpper') || 'ACTIONS' }}</th></tr>
                      </thead>
                      <tbody style="color: var(--text-primary)">
-                        <tr *ngFor="let v of voters" class="border-b hover:bg-black/5 transition-colors group" style="border-color: var(--border-color)">
+                        <tr *ngFor="let v of paginatedVoters" class="border-b hover:bg-black/5 transition-colors group" style="border-color: var(--border-color)">
                            <td class="py-4 px-6 font-mono font-bold">{{v.voter_code}}</td>
                            <td class="py-4 px-6 font-semibold">{{v.full_name}}</td>
                            <td class="py-4 px-6 font-mono text-xs max-w-[150px] truncate" [title]="v.password_hash" style="color: var(--text-secondary)">{{v.password_hash}}</td>
@@ -161,17 +166,17 @@ import { ApiService } from '../../services/api.service';
                         </select>
                       </div>
                       <div class="flex gap-2 w-full sm:w-auto">
-                        <button (click)="forceLoadCandidates()" [disabled]="loading" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors" [class.opacity-50]="loading">{{ loading ? 'SEEDING...' : 'FORCE LOAD' }}</button>
                         <button (click)="deleteAllCandidates()" class="flex-1 bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">DELETE ALL</button>
                         <button (click)="isAddingCandidate = !isAddingCandidate" class="flex-1 bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition-colors">+ NEW</button>
                       </div>
                   </div>
-                  <!-- Seeding Progress Banner -->
-                  <div *ngIf="seedingStatus" class="p-3 text-center font-bold text-sm border-b animate-pulse" 
-                       [style.background]="seedingStatus.includes('Complete') ? '#065f46' : seedingStatus.includes('FAILED') ? '#7f1d1d' : '#1e3a5f'"
-                       [style.color]="'white'"
-                       style="border-color: var(--border-color)">
-                    {{ seedingStatus }}
+                  
+                  <div class="p-2 border-b flex justify-between items-center bg-black/10" style="border-color: var(--border-color)">
+                     <div class="flex gap-2 items-center text-sm font-bold mx-auto" style="color: var(--text-secondary)">
+                        <button (click)="candidatePage = candidatePage - 1" [disabled]="candidatePage === 1" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">← Prev</button>
+                        <span>Page {{candidatePage}} of {{totalCandidatePages || 1}} ({{filteredCandidates.length}} matches)</span>
+                        <button (click)="candidatePage = candidatePage + 1" [disabled]="candidatePage >= totalCandidatePages" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">Next →</button>
+                     </div>
                   </div>
 
                   <!-- Add Candidate Modal Inline -->
@@ -197,7 +202,7 @@ import { ApiService } from '../../services/api.service';
                        <tr><th class="py-4 px-6">{{ translation.t('fullNameUpper') || 'NAME' }}</th><th class="py-4 px-6">{{ translation.t('party') || 'PARTY' }}</th><th class="py-4 px-6">{{ translation.t('seatName') || 'SEAT' }}</th><th class="py-4 px-6">{{ translation.t('level') || 'LEVEL' }}</th><th class="py-4 px-6 text-right">{{ translation.t('actionUpper') || 'ACTIONS' }}</th></tr>
                     </thead>
                     <tbody style="color: var(--text-primary)">
-                       <tr *ngFor="let c of filteredCandidates" class="border-b hover:bg-black/5 transition-colors group" style="border-color: var(--border-color)">
+                       <tr *ngFor="let c of paginatedCandidates" class="border-b hover:bg-black/5 transition-colors group" style="border-color: var(--border-color)">
                           <td class="py-4 px-6 font-bold">{{c.full_name}}</td>
                           <td class="py-4 px-6">{{c.party}}</td>
                           <td class="py-4 px-6 text-green-600 font-semibold">{{c.seat_name}}</td>
@@ -208,7 +213,7 @@ import { ApiService } from '../../services/api.service';
                            <td colspan="5" class="py-20 text-center" style="color: var(--text-secondary)">
                               <div class="text-4xl mb-2">🤷‍♂️</div>
                               <p class="font-bold">No candidates found.</p>
-                              <button (click)="forceLoadCandidates()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">CLICK TO SEED DATABASE</button>
+                              <p class="font-bold">No candidates found.</p>
                            </td>
                         </tr>
                     </tbody>
@@ -275,6 +280,52 @@ import { ApiService } from '../../services/api.service';
                      </tbody>
                    </table>
                 </div>
+
+                <!-- Reports Tab -->
+                <div *ngIf="activeTab === 'reports'" class="w-full p-8">
+                   <h3 class="text-2xl font-bold mb-6" style="color: var(--text-primary)">Export PDF Reports</h3>
+                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div class="border rounded-2xl p-6 transition-colors shadow-lg flex flex-col justify-between" style="background: var(--bg-card); border-color: var(--border-color)">
+                         <div>
+                            <h4 class="font-bold text-lg mb-2 text-blue-500">📊 Election Results Summary</h4>
+                            <p class="text-sm mb-4" style="color: var(--text-secondary)">Overview of all seats, winning candidates, and total votes per seat.</p>
+                         </div>
+                         <button (click)="downloadReport('election-results')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition-colors">Download PDF</button>
+                      </div>
+
+                      <div class="border rounded-2xl p-6 transition-colors shadow-lg flex flex-col justify-between" style="background: var(--bg-card); border-color: var(--border-color)">
+                         <div>
+                            <h4 class="font-bold text-lg mb-2 text-green-500">📈 Voter Turnout Report</h4>
+                            <p class="text-sm mb-4" style="color: var(--text-secondary)">Metrics on total registered voters vs total ballots cast.</p>
+                         </div>
+                         <button (click)="downloadReport('voter-turnout')" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition-colors">Download PDF</button>
+                      </div>
+
+                      <div class="border rounded-2xl p-6 transition-colors shadow-lg flex flex-col justify-between" style="background: var(--bg-card); border-color: var(--border-color)">
+                         <div>
+                            <h4 class="font-bold text-lg mb-2 text-purple-500">👥 Registered Voters List</h4>
+                            <p class="text-sm mb-4" style="color: var(--text-secondary)">Internal log of registered voters (passwords and secure data excluded).</p>
+                         </div>
+                         <button (click)="downloadReport('registered-voters')" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-bold transition-colors">Download PDF</button>
+                      </div>
+
+                      <div class="border rounded-2xl p-6 transition-colors shadow-lg flex flex-col justify-between" style="background: var(--bg-card); border-color: var(--border-color)">
+                         <div>
+                            <h4 class="font-bold text-lg mb-2 text-red-500">🕵️ Audit Trail Log</h4>
+                            <p class="text-sm mb-4" style="color: var(--text-secondary)">Immutable timestamped record of every vote cast in the system.</p>
+                         </div>
+                         <button (click)="downloadReport('audit-trail')" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition-colors">Download PDF</button>
+                      </div>
+
+                      <div class="border rounded-2xl p-6 transition-colors shadow-lg flex flex-col justify-between" style="background: var(--bg-card); border-color: var(--border-color)">
+                         <div>
+                            <h4 class="font-bold text-lg mb-2 text-yellow-500">🏆 Candidate Performance</h4>
+                            <p class="text-sm mb-4" style="color: var(--text-secondary)">Deep dive into individual candidate vote shares and overall rankings.</p>
+                         </div>
+                         <button (click)="downloadReport('candidate-performance')" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg font-bold transition-colors">Download PDF</button>
+                      </div>
+                   </div>
+                </div>
              </div>
            </div>
          </div>
@@ -292,7 +343,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   stats: any = null;
   refreshInterval: any;
 
-  activeTab: 'voters' | 'candidates' | 'votes' | 'leaders' = 'voters';
+  activeTab: 'voters' | 'candidates' | 'votes' | 'leaders' | 'reports' = 'voters';
   voters: any[] = [];
   candidates: any[] = [];
   votes: any[] = [];
@@ -306,7 +357,26 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   newCandidateParty = '';
   newCandidateSeat = 'president';
   isAddingCandidate = false;
-  seedingStatus: string = '';
+
+  voterPage = 1;
+  candidatePage = 1;
+  itemsPerPage = 100;
+
+  get paginatedVoters() {
+    return this.voters.slice((this.voterPage - 1) * this.itemsPerPage, this.voterPage * this.itemsPerPage);
+  }
+
+  get totalVoterPages() {
+    return Math.ceil(this.voters.length / this.itemsPerPage);
+  }
+
+  get paginatedCandidates() {
+    return this.filteredCandidates.slice((this.candidatePage - 1) * this.itemsPerPage, this.candidatePage * this.itemsPerPage);
+  }
+
+  get totalCandidatePages() {
+    return Math.ceil(this.filteredCandidates.length / this.itemsPerPage);
+  }
 
   get filteredCandidates() {
     return this.candidates.filter(c => {
@@ -501,59 +571,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
          });
      }
   }
-  forceLoadCandidates() {
-    if(!confirm("This will seed ~8,000+ candidates from the server CSV. The process runs in the background. Proceed?")) return;
-    this.loading = true;
-    this.seedingStatus = 'Starting seeding...';
-    
-    // Stop normal polling to reduce server load during seeding
-    if (this.refreshInterval) clearInterval(this.refreshInterval);
-    
-    this.api.forceLoadCandidates(this.token, "IEBC2026").subscribe({
-        next: (res) => {
-            this.seedingStatus = res.message || 'Seeding started in background...';
-            this.cdr.detectChanges();
-            // Poll for completion status
-            this.pollSeedingStatus();
-        },
-        error: (err) => {
-            this.seedingStatus = `FAILED: ${err.error?.error || 'Unknown error'}`;
-            this.loading = false;
-            this.startPolling();
-            this.cdr.detectChanges();
-        }
-    });
+  downloadReport(reportName: string) {
+    const url = `http://127.0.0.1:8000/system-admin/reports/${reportName}`;
+    window.open(url, '_blank');
   }
 
-  private seedingPollInterval: any;
-  pollSeedingStatus() {
-    if (this.seedingPollInterval) clearInterval(this.seedingPollInterval);
-    this.seedingPollInterval = setInterval(() => {
-      this.api.getSeedingStatus(this.token).subscribe({
-        next: (res) => {
-          this.seedingStatus = res.running 
-            ? `⏳ Seeding in progress... (${res.total_candidates} candidates, ${res.total_seats} seats so far)`
-            : res.message || res.error || 'Done.';
-          this.cdr.detectChanges();
-          
-          if (!res.running) {
-            // Seeding finished
-            clearInterval(this.seedingPollInterval);
-            this.loading = false;
-            this.seedingStatus = `✅ Complete! ${res.total_candidates} candidates across ${res.total_seats} seats.`;
-            this.loadTabData();
-            this.loadStats();
-            this.startPolling();
-            this.cdr.detectChanges();
-          }
-        },
-        error: () => {
-          this.seedingStatus = 'Could not check status. Retrying...';
-          this.cdr.detectChanges();
-        }
-      });
-    }, 3000);
-  }
+  // Seeding methods removed
+
 }
 
 // trigger recompile
