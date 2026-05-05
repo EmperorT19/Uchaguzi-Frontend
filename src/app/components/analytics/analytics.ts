@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
 import { AuthService } from '../../services/auth';
+import { CONSTITUENCIES } from '../../shared/constituencies';
 Chart.register(...registerables);
 
 // Province → County ID mappings for filter
@@ -43,10 +44,12 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   // Filter state
   selectedProvince: string = '';
   selectedCounty: string = '';
+  selectedConstituency: string = '';
   selectedSeatType: string = '';
   
   provinces = Object.keys(PROVINCES);
   availableCounties: { id: number; name: string }[] = [];
+  availableConstituencies: { id: number; name: string; countyId: number }[] = [];
 
   // Data
   allCandidatesData: any = {};
@@ -100,6 +103,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   onProvinceChange() {
     this.selectedCounty = '';
+    this.selectedConstituency = '';
     if (this.selectedProvince && PROVINCES[this.selectedProvince]) {
       this.availableCounties = PROVINCES[this.selectedProvince].counties.map(id => ({
         id, name: COUNTY_NAMES[id] || `County ${id}`
@@ -111,6 +115,16 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   onCountyChange() {
+    this.selectedConstituency = '';
+    if (this.selectedCounty) {
+      this.availableConstituencies = CONSTITUENCIES.filter(c => c.countyId.toString() === this.selectedCounty.toString());
+    } else {
+      this.availableConstituencies = [];
+    }
+    this.fetchAllCandidates();
+  }
+
+  onConstituencyChange() {
     this.fetchAllCandidates();
   }
 
@@ -125,6 +139,10 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   get regionLabel(): string {
+    if (this.selectedConstituency) {
+      const c = CONSTITUENCIES.find(x => x.id.toString() === this.selectedConstituency.toString());
+      return c ? `${c.name} Constituency` : `Constituency ${this.selectedConstituency}`;
+    }
     if (this.selectedCounty) {
       return COUNTY_NAMES[parseInt(this.selectedCounty)] || `County ${this.selectedCounty}`;
     }
@@ -148,7 +166,9 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     // Build query params based on filters
     let params: string[] = [];
     
-    if (this.selectedCounty) {
+    if (this.selectedConstituency) {
+      params.push(`constituency=${this.selectedConstituency}`);
+    } else if (this.selectedCounty) {
       params.push(`county=${this.selectedCounty}`);
     } else if (this.selectedProvince) {
       params.push(`province=${this.selectedProvince}`);

@@ -624,7 +624,7 @@ export class Voting implements OnInit, OnDestroy {
   }
 
   summarizeCandidate(id: number) {
-    // AI Integration: Requests a dynamic, 2-sentence summary of the candidate's platform
+    // AI Integration: Requests a dynamic, 5-sentence summary of the candidate's platform
     this.loadingSummaries[id] = true;
     this.api.summarizeCandidate(id).subscribe({
       next: (res) => {

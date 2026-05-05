@@ -67,6 +67,14 @@ export class ApiService {
     );
   }
 
+  forgotPassword(data: { id_number: string; email: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.baseUrl}/voter/forgot-password`,
+      data,
+      { headers: this.headers(), withCredentials: false }
+    );
+  }
+
   castVote(data: {
     voter_id: number;
     seat_id: number;
@@ -173,6 +181,7 @@ export class ApiService {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
     return this.http.get<any[]>(`${this.baseUrl}/results/leaders`, { headers });
   }
+
   deleteAllAdminCandidates(token: string): Observable<any> {
     const headers = this.headers().set('Authorization', `Bearer ${token}`);
     return this.http.delete<any>(`${this.baseUrl}/system-admin/candidates/delete-all`, { headers });
