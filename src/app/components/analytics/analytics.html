@@ -42,7 +42,7 @@
         <select [(ngModel)]="selectedProvince" (ngModelChange)="onProvinceChange()" 
                 class="w-full border rounded-lg px-4 py-3 text-sm outline-none transition-colors"
                 style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
-          <option value="">{{ t('allProvinces') || '-- All Provinces (My Region) --' }}</option>
+          <option value="">{{ t('allProvinces') || '-- All Provinces --' }}</option>
           <option *ngFor="let p of provinces" [value]="p">{{ p }}</option>
         </select>
       </div>

@@ -55,6 +55,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   allCandidatesData: any = {};
   seatTypes = ['president', 'governor', 'senator', 'woman_rep', 'mp', 'mca'];
   loading = false;
+  refreshInterval: any;
 
   @ViewChild('overviewChart') overviewChartRef!: ElementRef;
   overviewChartInstance: any;
@@ -81,6 +82,9 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     window.removeEventListener('langChanged', this.langChangedHandler);
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   setupThemeListener() {
@@ -147,7 +151,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       return COUNTY_NAMES[parseInt(this.selectedCounty)] || `County ${this.selectedCounty}`;
     }
     if (this.selectedProvince) return this.selectedProvince + ' Province';
-    return this.t('nationalVotes') || 'National (All Regions)';
+    return 'National Votes';
   }
 
   fetchAllCandidates() {
@@ -172,12 +176,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       params.push(`county=${this.selectedCounty}`);
     } else if (this.selectedProvince) {
       params.push(`province=${this.selectedProvince}`);
-    } else {
-      // Default: show user's region
-      params.push(`county=${user.county}`);
-      params.push(`constituency=${user.constituency}`);
-      params.push(`ward=${user.ward}`);
     }
+    // No else — when no filter is selected, send no params = national overview
 
     let url = `${baseUrl}/results/all_candidates?${params.join('&')}`;
 
@@ -188,9 +188,46 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         this.renderOverviewChart();
         this.refreshAllVisibleCharts();
         this.cdr.detectChanges();
+        // Start auto-refresh after first load
+        this.startPolling();
       },
       error: () => {
         this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  startPolling() {
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
+    this.refreshInterval = setInterval(() => {
+      this.silentRefresh();
+    }, 15000);
+  }
+
+  silentRefresh() {
+    const user = this.authService.getCurrentUser();
+    if (!user) return;
+
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://127.0.0.1:8000' 
+      : 'https://web-production-a0d6df.up.railway.app';
+
+    let params: string[] = [];
+    if (this.selectedConstituency) {
+      params.push(`constituency=${this.selectedConstituency}`);
+    } else if (this.selectedCounty) {
+      params.push(`county=${this.selectedCounty}`);
+    } else if (this.selectedProvince) {
+      params.push(`province=${this.selectedProvince}`);
+    }
+
+    let url = `${baseUrl}/results/all_candidates${params.length ? '?' + params.join('&') : ''}`;
+    this.http.get<any>(url).subscribe({
+      next: (data) => {
+        this.allCandidatesData = data;
+        this.renderOverviewChart();
+        this.refreshAllVisibleCharts();
         this.cdr.detectChanges();
       }
     });
