@@ -4,6 +4,31 @@ import { FormsModule } from '@angular/forms';
 import { TranslationService } from '../../services/translation.service';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
+import { CONSTITUENCIES } from '../../shared/constituencies';
+
+// Province → County ID mappings for filter
+const PROVINCES: { [key: string]: { name: string; counties: number[] } } = {
+  'Coast':    { name: 'Coast',    counties: [1, 2, 3, 4, 5, 6] },
+  'North Eastern': { name: 'North Eastern', counties: [7, 8, 9] },
+  'Eastern':  { name: 'Eastern',  counties: [10, 11, 12, 13, 14, 15, 16, 17] },
+  'Central':  { name: 'Central',  counties: [18, 19, 20, 21, 22] },
+  'Rift Valley': { name: 'Rift Valley', counties: [23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36] },
+  'Western':  { name: 'Western',  counties: [37, 38, 39, 40] },
+  'Nyanza':   { name: 'Nyanza',   counties: [41, 42, 43, 44, 45, 46] },
+  'Nairobi':  { name: 'Nairobi',  counties: [47] }
+};
+
+const COUNTY_NAMES: { [key: number]: string } = {
+  1: 'Mombasa', 2: 'Kwale', 3: 'Kilifi', 4: 'Tana River', 5: 'Lamu', 6: 'Taita-Taveta',
+  7: 'Garissa', 8: 'Wajir', 9: 'Mandera', 10: 'Marsabit', 11: 'Isiolo', 12: 'Meru',
+  13: 'Tharaka-Nithi', 14: 'Embu', 15: 'Kitui', 16: 'Machakos', 17: 'Makueni',
+  18: 'Nyandarua', 19: 'Nyeri', 20: 'Kirinyaga', 21: "Murang'a", 22: 'Kiambu',
+  23: 'Turkana', 24: 'West Pokot', 25: 'Samburu', 26: 'Trans-Nzoia', 27: 'Uasin Gishu',
+  28: 'Elgeyo-Marakwet', 29: 'Nandi', 30: 'Baringo', 31: 'Laikipia', 32: 'Nakuru',
+  33: 'Narok', 34: 'Kajiado', 35: 'Kericho', 36: 'Bomet', 37: 'Kakamega', 38: 'Vihiga',
+  39: 'Bungoma', 40: 'Busia', 41: 'Siaya', 42: 'Kisumu', 43: 'Homa Bay', 44: 'Migori',
+  45: 'Kisii', 46: 'Nyamira', 47: 'Nairobi'
+};
 
 @Component({
   selector: 'app-admin',
@@ -324,6 +349,32 @@ import { ApiService } from '../../services/api.service';
                          </div>
                          <button (click)="downloadReport('candidate-performance')" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg font-bold transition-colors">Download PDF</button>
                       </div>
+
+                      <!-- Regional Analysis Report -->
+                      <div class="border rounded-2xl p-6 transition-colors shadow-lg flex flex-col justify-between" style="background: var(--bg-card); border-color: var(--border-color)">
+                         <div>
+                            <h4 class="font-bold text-lg mb-2 text-indigo-500">🗺️ Regional Analytics Report</h4>
+                            <p class="text-sm mb-4" style="color: var(--text-secondary)">Deep dive into specific provinces, counties, or constituencies.</p>
+                            
+                            <div class="space-y-3 mb-4">
+                               <select [(ngModel)]="regionalProvince" (ngModelChange)="onRegionalProvinceChange()" class="w-full border rounded-lg px-3 py-2 text-sm outline-none transition-colors" style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
+                                  <option value="">-- All Provinces (National) --</option>
+                                  <option *ngFor="let p of regionalProvinces" [value]="p">{{ p }}</option>
+                               </select>
+                               
+                               <select [(ngModel)]="regionalCounty" (ngModelChange)="onRegionalCountyChange()" [disabled]="!regionalProvince" class="w-full border rounded-lg px-3 py-2 text-sm outline-none transition-colors" [style.opacity]="regionalProvince ? '1' : '0.5'" style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
+                                  <option value="">-- All Counties in Province --</option>
+                                  <option *ngFor="let c of regionalAvailableCounties" [value]="c.id">{{ c.name }}</option>
+                               </select>
+                               
+                               <select [(ngModel)]="regionalConstituency" [disabled]="!regionalCounty" class="w-full border rounded-lg px-3 py-2 text-sm outline-none transition-colors" [style.opacity]="regionalCounty ? '1' : '0.5'" style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color)">
+                                  <option value="">-- All Constituencies --</option>
+                                  <option *ngFor="let c of regionalAvailableConstituencies" [value]="c.id">{{ c.name }}</option>
+                               </select>
+                            </div>
+                         </div>
+                         <button (click)="downloadRegionalReport()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold transition-colors">Download PDF</button>
+                      </div>
                    </div>
                 </div>
              </div>
@@ -361,6 +412,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   voterPage = 1;
   candidatePage = 1;
   itemsPerPage = 100;
+  
+  regionalProvince = '';
+  regionalCounty = '';
+  regionalConstituency = '';
+  regionalProvinces = Object.keys(PROVINCES);
+  regionalAvailableCounties: { id: number; name: string }[] = [];
+  regionalAvailableConstituencies: { id: number; name: string; countyId: number }[] = [];
 
   get paginatedVoters() {
     return this.voters.slice((this.voterPage - 1) * this.itemsPerPage, this.voterPage * this.itemsPerPage);
@@ -576,7 +634,40 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     window.open(url, '_blank');
   }
 
-  // Seeding methods removed
+  onRegionalProvinceChange() {
+    this.regionalCounty = '';
+    this.regionalConstituency = '';
+    if (this.regionalProvince && PROVINCES[this.regionalProvince]) {
+      this.regionalAvailableCounties = PROVINCES[this.regionalProvince].counties.map(id => ({
+        id, name: COUNTY_NAMES[id] || `County ${id}`
+      }));
+    } else {
+      this.regionalAvailableCounties = [];
+    }
+    this.regionalAvailableConstituencies = [];
+  }
+
+  onRegionalCountyChange() {
+    this.regionalConstituency = '';
+    if (this.regionalCounty) {
+      this.regionalAvailableConstituencies = CONSTITUENCIES.filter(c => c.countyId.toString() === this.regionalCounty.toString());
+    } else {
+      this.regionalAvailableConstituencies = [];
+    }
+  }
+
+  downloadRegionalReport() {
+    let url = `http://127.0.0.1:8000/system-admin/reports/regional-analysis`;
+    let params = [];
+    if (this.regionalConstituency) params.push(`constituency=${this.regionalConstituency}`);
+    else if (this.regionalCounty) params.push(`county=${this.regionalCounty}`);
+    else if (this.regionalProvince) params.push(`province=${this.regionalProvince}`);
+    
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+    window.open(url, '_blank');
+  }
 
 }
 
