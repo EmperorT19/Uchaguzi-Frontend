@@ -521,11 +521,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   goToDashboard() {
-    localStorage.removeItem('uchaguzi_admin_token');
-    this.isAuthenticated = false;
-    this.token = '';
-    if (this.refreshInterval) clearInterval(this.refreshInterval);
-    this.router.navigate(['/']);
+    this.router.navigate(['/dashboard']);
   }
 
   goTo(route: string) {
