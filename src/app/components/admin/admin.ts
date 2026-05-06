@@ -83,6 +83,7 @@ const COUNTY_NAMES: { [key: number]: string } = {
             <button (click)="translation.toggleLang()" class="px-4 py-2 bg-black/30 hover:bg-black/50 text-white border border-white/20 rounded-lg font-bold transition-colors">
               {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
             </button>
+            <button (click)="logout()" class="px-4 py-2 bg-red-900/50 hover:bg-red-800 text-white border border-red-500/50 rounded-lg transition-colors font-bold text-sm tracking-widest">LOGOUT</button>
             <button (click)="goToDashboard()" class="px-6 py-2 bg-black/30 hover:bg-black/50 text-white border border-white/20 rounded-lg transition-colors">{{ translation.t('goToDashboardUpper') || 'GO TO DASHBOARD' }}</button>
           </div>
         </div>
@@ -518,6 +519,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  logout() {
+    localStorage.removeItem('uchaguzi_admin_token');
+    this.isAuthenticated = false;
+    this.token = '';
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
   }
 
   goToDashboard() {

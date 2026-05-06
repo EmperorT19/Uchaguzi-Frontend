@@ -148,7 +148,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit() {
     window.addEventListener('langChanged', this.langChangedHandler);
     
-    // Use the observable to keep the UI in sync with AuthService state
+    //keep the UI in sync with AuthService state
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (!user && this.router.url === '/dashboard') {
