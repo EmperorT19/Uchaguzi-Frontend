@@ -5170,7 +5170,10 @@ export class RegistrationComponent implements OnInit {
 
   constructor(private api: ApiService, private router: Router, private cdr: ChangeDetectorRef) { }
 
-  ngOnInit() { }
+  ngOnInit() {
+    // HIGH SECURITY: Proactively destroy any existing session if they visit the registration page.
+    sessionStorage.removeItem('currentUser');
+  }
 
   onCountyNameChange() {
     const matched = this.counties.find(c => c.name.toLowerCase() === this.form.countyName.toLowerCase());

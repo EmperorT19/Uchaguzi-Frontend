@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -210,7 +210,7 @@ import { AuthService, Voter } from '../../services/auth';
   `,
   styles: []
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   idNumber = '';
   voterCode = '';
   loading = false;
@@ -246,6 +246,11 @@ export class LoginComponent {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnInit() {
+    // HIGH SECURITY: Proactively destroy any existing session if they visit the login page.
+    this.authService.logout();
+  }
 
   filterNumbers() {
     this.idNumber = this.idNumber.replace(/\D/g, '').slice(0, 9);

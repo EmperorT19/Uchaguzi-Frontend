@@ -83,7 +83,6 @@ const COUNTY_NAMES: { [key: number]: string } = {
             <button (click)="translation.toggleLang()" class="px-4 py-2 bg-black/30 hover:bg-black/50 text-white border border-white/20 rounded-lg font-bold transition-colors">
               {{ translation.currentLang === 'en' ? 'SW' : 'EN' }}
             </button>
-            <button (click)="logout()" class="px-4 py-2 bg-red-900/50 hover:bg-red-800 text-white border border-red-500/50 rounded-lg transition-colors font-bold text-sm tracking-widest">LOGOUT</button>
             <button (click)="goToDashboard()" class="px-6 py-2 bg-black/30 hover:bg-black/50 text-white border border-white/20 rounded-lg transition-colors">{{ translation.t('goToDashboardUpper') || 'GO TO DASHBOARD' }}</button>
           </div>
         </div>
@@ -475,14 +474,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     window.addEventListener('langChanged', () => this.cdr.detectChanges());
-    const savedToken = localStorage.getItem('uchaguzi_admin_token');
-    if (savedToken) {
-      this.token = savedToken;
-      this.isAuthenticated = true;
-      this.loadStats();
-      this.loadTabData();
-      this.startPolling();
-    }
+    // We intentionally DO NOT check localStorage here.
+    // The user MUST enter the master key every time they navigate to this portal.
   }
 
   ngOnDestroy() {
@@ -504,7 +497,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.api.adminLogin(this.adminKey).subscribe({
       next: (res) => {
         this.token = res.token;
-        localStorage.setItem('uchaguzi_admin_token', this.token);
+        // Token is kept in memory only, not in localStorage.
         this.isAuthenticated = true;
         this.loading = false;
         this.adminKey = '';
@@ -519,13 +512,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  logout() {
-    localStorage.removeItem('uchaguzi_admin_token');
-    this.isAuthenticated = false;
-    this.token = '';
-    if (this.refreshInterval) clearInterval(this.refreshInterval);
   }
 
   goToDashboard() {
