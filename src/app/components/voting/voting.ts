@@ -676,7 +676,7 @@ export class Voting implements OnInit, OnDestroy {
     });
   }
 
-  goBack() { this.router.navigate(['/dashboard']); }
+  goBack() { window.scrollTo(0, 0); }
   goTo(route: string) { this.router.navigate([route]); }
   logout() {
     this.authService.logout();

@@ -173,6 +173,13 @@ const COUNTY_NAMES: { [key: number]: string } = {
                         <tr *ngIf="voters.length === 0"><td colspan="7" class="py-12 text-center" style="color: var(--text-secondary)">No records found.</td></tr>
                      </tbody>
                   </table>
+                  <div class="flex justify-center items-center p-4 border-t gap-4" style="background: var(--bg-primary); border-color: var(--border-color)">
+                     <div class="flex gap-2 items-center text-sm font-bold" style="color: var(--text-secondary)">
+                        <button (click)="voterPage = voterPage - 1" [disabled]="voterPage === 1" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">← Prev</button>
+                        <span>Page {{voterPage}} of {{totalVoterPages || 1}} ({{voters.length}} total)</span>
+                        <button (click)="voterPage = voterPage + 1" [disabled]="voterPage >= totalVoterPages" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">Next →</button>
+                     </div>
+                  </div>
                </div>
 
                <!-- Candidates Table -->
@@ -243,6 +250,13 @@ const COUNTY_NAMES: { [key: number]: string } = {
                         </tr>
                     </tbody>
                   </table>
+                  <div class="flex justify-center items-center p-4 border-t gap-4" style="background: var(--bg-primary); border-color: var(--border-color)">
+                     <div class="flex gap-2 items-center text-sm font-bold" style="color: var(--text-secondary)">
+                        <button (click)="candidatePage = candidatePage - 1" [disabled]="candidatePage === 1" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">← Prev</button>
+                        <span>Page {{candidatePage}} of {{totalCandidatePages || 1}} ({{filteredCandidates.length}} matches)</span>
+                        <button (click)="candidatePage = candidatePage + 1" [disabled]="candidatePage >= totalCandidatePages" class="px-3 py-1 bg-black/20 rounded hover:bg-black/40 disabled:opacity-50 transition-colors">Next →</button>
+                     </div>
+                  </div>
                </div>
 
                <!-- Leaders Table -->
@@ -507,11 +521,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   goToDashboard() {
-    localStorage.removeItem('uchaguzi_admin_token');
-    this.isAuthenticated = false;
-    this.token = '';
-    if (this.refreshInterval) clearInterval(this.refreshInterval);
-    this.router.navigate(['/']);
+    this.router.navigate(['/dashboard']);
   }
 
   goTo(route: string) {

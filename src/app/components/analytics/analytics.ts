@@ -45,16 +45,19 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   selectedProvince: string = '';
   selectedCounty: string = '';
   selectedConstituency: string = '';
+  selectedWard: string = '';
   selectedSeatType: string = '';
   
   provinces = Object.keys(PROVINCES);
   availableCounties: { id: number; name: string }[] = [];
   availableConstituencies: { id: number; name: string; countyId: number }[] = [];
+  availableWards: { id: number; name: string; constituency_id: number }[] = [];
 
   // Data
   allCandidatesData: any = {};
   seatTypes = ['president', 'governor', 'senator', 'woman_rep', 'mp', 'mca'];
   loading = false;
+  refreshInterval: any;
 
   @ViewChild('overviewChart') overviewChartRef!: ElementRef;
   overviewChartInstance: any;
@@ -81,6 +84,9 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     window.removeEventListener('langChanged', this.langChangedHandler);
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   setupThemeListener() {
@@ -104,6 +110,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   onProvinceChange() {
     this.selectedCounty = '';
     this.selectedConstituency = '';
+    this.selectedWard = '';
+    this.availableWards = [];
     if (this.selectedProvince && PROVINCES[this.selectedProvince]) {
       this.availableCounties = PROVINCES[this.selectedProvince].counties.map(id => ({
         id, name: COUNTY_NAMES[id] || `County ${id}`
@@ -116,6 +124,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   onCountyChange() {
     this.selectedConstituency = '';
+    this.selectedWard = '';
+    this.availableWards = [];
     if (this.selectedCounty) {
       this.availableConstituencies = CONSTITUENCIES.filter(c => c.countyId.toString() === this.selectedCounty.toString());
     } else {
@@ -125,6 +135,20 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   onConstituencyChange() {
+    this.selectedWard = '';
+    this.availableWards = [];
+    if (this.selectedConstituency) {
+      const baseUrl = window.location.hostname === 'localhost' 
+        ? 'http://127.0.0.1:8000' 
+        : 'https://web-production-a0d6df.up.railway.app';
+      this.http.get<any>(`${baseUrl}/wards/?constituency=${this.selectedConstituency}`).subscribe(res => {
+        this.availableWards = res;
+      });
+    }
+    this.fetchAllCandidates();
+  }
+
+  onWardChange() {
     this.fetchAllCandidates();
   }
 
@@ -139,6 +163,10 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   }
 
   get regionLabel(): string {
+    if (this.selectedWard) {
+      const w = this.availableWards.find(x => x.id.toString() === this.selectedWard.toString());
+      return w ? `${w.name} Ward` : `Ward ${this.selectedWard}`;
+    }
     if (this.selectedConstituency) {
       const c = CONSTITUENCIES.find(x => x.id.toString() === this.selectedConstituency.toString());
       return c ? `${c.name} Constituency` : `Constituency ${this.selectedConstituency}`;
@@ -147,7 +175,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       return COUNTY_NAMES[parseInt(this.selectedCounty)] || `County ${this.selectedCounty}`;
     }
     if (this.selectedProvince) return this.selectedProvince + ' Province';
-    return this.t('nationalVotes') || 'National (All Regions)';
+    return 'National Votes';
   }
 
   fetchAllCandidates() {
@@ -166,18 +194,16 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     // Build query params based on filters
     let params: string[] = [];
     
-    if (this.selectedConstituency) {
+    if (this.selectedWard) {
+      params.push(`ward=${this.selectedWard}`);
+    } else if (this.selectedConstituency) {
       params.push(`constituency=${this.selectedConstituency}`);
     } else if (this.selectedCounty) {
       params.push(`county=${this.selectedCounty}`);
     } else if (this.selectedProvince) {
       params.push(`province=${this.selectedProvince}`);
-    } else {
-      // Default: show user's region
-      params.push(`county=${user.county}`);
-      params.push(`constituency=${user.constituency}`);
-      params.push(`ward=${user.ward}`);
     }
+    // No else — when no filter is selected, send no params = national overview
 
     let url = `${baseUrl}/results/all_candidates?${params.join('&')}`;
 
@@ -188,9 +214,48 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         this.renderOverviewChart();
         this.refreshAllVisibleCharts();
         this.cdr.detectChanges();
+        // Start auto-refresh after first load
+        this.startPolling();
       },
       error: () => {
         this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  startPolling() {
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
+    this.refreshInterval = setInterval(() => {
+      this.silentRefresh();
+    }, 15000);
+  }
+
+  silentRefresh() {
+    const user = this.authService.getCurrentUser();
+    if (!user) return;
+
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? 'http://127.0.0.1:8000' 
+      : 'https://web-production-a0d6df.up.railway.app';
+
+    let params: string[] = [];
+    if (this.selectedWard) {
+      params.push(`ward=${this.selectedWard}`);
+    } else if (this.selectedConstituency) {
+      params.push(`constituency=${this.selectedConstituency}`);
+    } else if (this.selectedCounty) {
+      params.push(`county=${this.selectedCounty}`);
+    } else if (this.selectedProvince) {
+      params.push(`province=${this.selectedProvince}`);
+    }
+
+    let url = `${baseUrl}/results/all_candidates${params.length ? '?' + params.join('&') : ''}`;
+    this.http.get<any>(url).subscribe({
+      next: (data) => {
+        this.allCandidatesData = data;
+        this.renderOverviewChart();
+        this.refreshAllVisibleCharts();
         this.cdr.detectChanges();
       }
     });
